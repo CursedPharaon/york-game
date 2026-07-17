@@ -61,12 +61,9 @@
         .modal-inner .btn-danger { background: #6a2a2a; }
         .modal-inner .btn-craft { background: #2a4a6a; }
         .craft-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a2a; }
-        .house-menu { background: #1a1a1a; padding: 15px; border-radius: 8px; }
-        .house-menu .slot { display: inline-block; background: #2a2a2a; padding: 10px; margin: 4px; border-radius: 4px; min-width: 40px; text-align: center; }
         .status { font-size: 12px; }
         .online { color: #4a4; }
         .offline { color: #a44; }
-        .admin-prefix { color: #ffa500; }
     </style>
 </head>
 <body>
@@ -97,7 +94,7 @@
             <h3>🌐 Мультиплеер</h3>
             <div id="serverList" class="server-list"></div>
             <div class="add-server">
-                <input id="serverUrlInput" placeholder="Ссылка на сервер">
+                <input id="serverUrlInput" placeholder="Ссылка на сервер (например, https://york-server.onrender.com)">
                 <button onclick="addServer()">➕ Добавить</button>
             </div>
             <div id="loginBox">
@@ -121,7 +118,7 @@
                 <span>✨ <span id="gold">0</span></span>
                 <span>🪓 <span id="pickaxe">0</span></span>
                 <span>🪓 <span id="axe">0</span></span>
-                <span>💥 <span id="upgraded_dynamite">0</span></span>
+                <span>💥⭐ <span id="upgraded_dynamite">0</span></span>
             </div>
             <div><span id="playerName" style="color:#8a8;"></span> <span id="serverName" style="color:#aaa;font-size:12px;"></span></div>
         </div>
@@ -149,7 +146,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКИ -->
+    <!-- МОДАЛКИ (все скрыты по умолчанию) -->
     <div id="craftModal" class="modal hidden">
         <div class="modal-inner">
             <h3>🔧 Крафт</h3>
@@ -157,9 +154,6 @@
             <button onclick="closeModal('craftModal')">Закрыть</button>
         </div>
     </div>
-    function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
-    }
 
     <div id="houseModal" class="modal hidden">
         <div class="modal-inner">
@@ -173,9 +167,10 @@
         <div class="modal-inner">
             <h3>📦 Сундук</h3>
             <div id="chestInventory"></div>
-            <button onclick="closeModal('chestModal')" style="margin-top:10px;background:#2a2a2a;">Закрыть</button>
+            <button onclick="closeModal('chestModal')">Закрыть</button>
         </div>
     </div>
+</div>
 
 <script>
     // ========== НАСТРОЙКИ ==========
@@ -191,8 +186,6 @@
     let selectedCell = null;
     let boomMode = false;
     let eventSource = null;
-    let houseInventory = {};
-    let myHouseCoords = null;
 
     // ========== УПРАВЛЕНИЕ СЕРВЕРАМИ ==========
     function getServers() {
@@ -500,7 +493,6 @@
         
         if (boomMode) { boomMode = false; doBoom(x, y); return; }
         
-        // Если клик по дому
         if (data.type === 'house' && data.owner === currentUser) {
             openHouseMenu(x, y, data.house_level || 1);
         }
@@ -635,42 +627,19 @@
             resources.dynamite -= cost;
         }
         
-        const items = [];
         for (let dx = -radius; dx <= radius; dx++) {
             for (let dy = -radius; dy <= radius; dy++) {
                 const k = (x+dx) + ',' + (y+dy);
                 if (worldData[k]) {
-                    const data = worldData[k];
-                    // Если взрываем дом — забираем лут из сундука
-                    if (data.type === 'house' && data.owner) {
-                        const inv = await getHouseInventory(data.owner);
-                        for (const item of inv) {
-                            items.push({ type: item.item_type, amount: item.amount });
-                        }
-                        await clearHouseInventory(data.owner);
-                    }
                     worldData[k] = { type: 'grass', owner: null, house_level: 0 };
                 }
             }
         }
         
-        // Добавляем лут в инвентарь игрока
-        for (const item of items) {
-            if (item.type === 'wood') resources.wood += item.amount;
-            else if (item.type === 'stone') resources.stone += item.amount;
-            else if (item.type === 'iron') resources.iron += item.amount;
-            else if (item.type === 'gold') resources.gold += item.amount;
-            else if (item.type === 'dynamite') resources.dynamite += item.amount;
-        }
-        if (items.length > 0) {
-            sendChatMessage('💥 ' + currentUser + ' взорвал дом и забрал ' + items.length + ' предметов!', true);
-        } else {
-            sendChatMessage('💥 ' + currentUser + ' взорвал бомбу!', true);
-        }
-        
         await saveAll();
         updateUI();
         renderMap();
+        sendChatMessage('💥 ' + currentUser + ' взорвал бомбу!', true);
         boomMode = false;
     }
 
@@ -776,39 +745,19 @@
         
         const level = data.house_level || 1;
         const slots = level * 5;
-        const inventory = await getHouseInventory(currentUser);
         
         const container = document.getElementById('chestInventory');
-        let html = `<p>Сундук (${slots} слотов)</p><div style="display:flex;flex-wrap:wrap;">`;
-        for (let i = 0; i < slots; i++) {
-            const item = inventory.find(inv => inv.slot === i);
-            if (item) {
-                html += `<div class="slot">${item.item_type} x${item.amount}</div>`;
-            } else {
-                html += `<div class="slot" style="background:#1a1a1a;color:#444;">пусто</div>`;
-            }
-        }
-        html += `</div>
-            <p style="margin-top:10px;font-size:12px;color:#888;">Положи предметы в сундук через чат: /chest put [предмет] [количество]</p>
-            <p style="font-size:12px;color:#888;">Забери предметы: /chest get [предмет] [количество]</p>
+        container.innerHTML = `
+            <p>📦 Сундук (${slots} слотов)</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;">
+                ${Array.from({length: slots}, (_, i) => `
+                    <div class="slot" style="background:#2a2a2a;padding:8px;border-radius:4px;min-width:30px;text-align:center;color:#666;">
+                        пусто
+                    </div>
+                `).join('')}
+            </div>
+            <p style="font-size:12px;color:#888;">🔧 Команды для сундука в разработке...</p>
         `;
-        container.innerHTML = html;
-    }
-
-    async function getHouseInventory(owner) {
-        if (currentMode === 'single') {
-            return houseInventory[owner] || [];
-        }
-        const result = await apiCall('/get_house_inventory', 'POST', { owner });
-        return result || [];
-    }
-
-    async function clearHouseInventory(owner) {
-        if (currentMode === 'single') {
-            houseInventory[owner] = [];
-            return;
-        }
-        await apiCall('/save_house_inventory', 'POST', { owner, items: [] });
     }
 
     // ========== КОМАНДЫ ЧЕРЕЗ ЧАТ ==========
@@ -818,7 +767,7 @@
         if (!msg) return;
         input.value = '';
         
-        // Проверка на команду
+        // Команды администраторов
         if (msg.startsWith('/')) {
             await handleCommand(msg);
             return;
@@ -855,13 +804,10 @@
         const parts = cmd.split(' ');
         const command = parts[0].toLowerCase();
         
-        // /mute Nick 30m
         if (command === '/mute' && parts.length >= 3) {
             const target = parts[1];
             const duration = parts[2];
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'mute', target, duration 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'mute', target, duration });
             if (result.success) {
                 sendChatMessage('🔇 ' + result.message, true);
             } else {
@@ -870,12 +816,9 @@
             return;
         }
         
-        // /unmute Nick
         if (command === '/unmute' && parts.length >= 2) {
             const target = parts[1];
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'unmute', target 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unmute', target });
             if (result.success) {
                 sendChatMessage('🔊 ' + result.message, true);
             } else {
@@ -884,13 +827,10 @@
             return;
         }
         
-        // /ban Nick причина
         if (command === '/ban' && parts.length >= 3) {
             const target = parts[1];
             const reason = parts.slice(2).join(' ');
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'ban', target, reason 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'ban', target, reason });
             if (result.success) {
                 sendChatMessage('🔨 ' + result.message, true);
             } else {
@@ -899,14 +839,11 @@
             return;
         }
         
-        // /tempban Nick причина 1d
         if (command === '/tempban' && parts.length >= 4) {
             const target = parts[1];
             const reason = parts.slice(2, -1).join(' ');
             const duration = parts[parts.length - 1];
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'tempban', target, reason, duration 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'tempban', target, reason, duration });
             if (result.success) {
                 sendChatMessage('⏳ ' + result.message, true);
             } else {
@@ -915,12 +852,9 @@
             return;
         }
         
-        // /unban Nick
         if (command === '/unban' && parts.length >= 2) {
             const target = parts[1];
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'unban', target 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unban', target });
             if (result.success) {
                 sendChatMessage('🔓 ' + result.message, true);
             } else {
@@ -929,13 +863,10 @@
             return;
         }
         
-        // /addadmin Nick 1/2/3
         if (command === '/addadmin' && parts.length >= 3) {
             const target = parts[1];
             const level = parts[2];
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'addadmin', target, level 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'addadmin', target, level });
             if (result.success) {
                 sendChatMessage('⭐ ' + result.message, true);
             } else {
@@ -944,12 +875,9 @@
             return;
         }
         
-        // /removeadmin Nick
         if (command === '/removeadmin' && parts.length >= 2) {
             const target = parts[1];
-            const result = await apiCall('/admin_command', 'POST', { 
-                admin: currentUser, command: 'removeadmin', target 
-            });
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'removeadmin', target });
             if (result.success) {
                 sendChatMessage('⭐ ' + result.message, true);
             } else {
@@ -958,49 +886,7 @@
             return;
         }
         
-        // /chest put предмет количество
-        if (command === '/chest' && parts.length >= 4 && parts[1] === 'put') {
-            const itemType = parts[2];
-            const amount = parseInt(parts[3]);
-            if (!amount || amount < 1) { sendChatMessage('❌ Укажи количество', true); return; }
-            // Проверяем, есть ли у игрока этот ресурс
-            if (resources[itemType] === undefined || resources[itemType] < amount) {
-                sendChatMessage('❌ У тебя нет столько ' + itemType, true);
-                return;
-            }
-            resources[itemType] -= amount;
-            // Сохраняем в сундук
-            const key = selectedCell ? `${selectedCell.x},${selectedCell.y}` : '0,0';
-            if (currentMode === 'single') {
-                if (!houseInventory[currentUser]) houseInventory[currentUser] = [];
-                houseInventory[currentUser].push({ slot: houseInventory[currentUser].length, item_type: itemType, amount });
-            } else {
-                await apiCall('/save_house_inventory', 'POST', { 
-                    owner: currentUser, 
-                    items: [{ slot: 0, item_type: itemType, amount }] 
-                });
-            }
-            await saveAll();
-            updateUI();
-            sendChatMessage('📦 ' + currentUser + ' положил ' + amount + ' ' + itemType + ' в сундук', true);
-            return;
-        }
-        
-        // /chest get предмет количество
-        if (command === '/chest' && parts.length >= 4 && parts[1] === 'get') {
-            const itemType = parts[2];
-            const amount = parseInt(parts[3]);
-            if (!amount || amount < 1) { sendChatMessage('❌ Укажи количество', true); return; }
-            // Забираем из сундука
-            // В упрощённой версии — просто выдаём игроку
-            resources[itemType] += amount;
-            await saveAll();
-            updateUI();
-            sendChatMessage('📦 ' + currentUser + ' забрал ' + amount + ' ' + itemType + ' из сундука', true);
-            return;
-        }
-        
-        sendChatMessage('❌ Неизвестная команда. Доступно: /mute, /unmute, /ban, /tempban, /unban, /addadmin, /removeadmin, /chest put/get', true);
+        sendChatMessage('❌ Неизвестная команда. Доступно: /mute, /unmute, /ban, /tempban, /unban, /addadmin, /removeadmin', true);
     }
 
     // ========== МОДАЛКИ ==========
@@ -1041,8 +927,6 @@
     console.log('  /unban Nick');
     console.log('  /addadmin Nick 1/2/3');
     console.log('  /removeadmin Nick');
-    console.log('  /chest put предмет количество');
-    console.log('  /chest get предмет количество');
 </script>
 </body>
 </html>
