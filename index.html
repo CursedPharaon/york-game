@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>York</title>
+    <title>York — Игра</title>
     <style>
         * { box-sizing: border-box; font-family: monospace; user-select: none; }
         body { background: #0d0d0d; color: #eee; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -15,12 +15,18 @@
         .menu-btn:hover { background: #3a3a3a; }
         .menu-btn.primary { background: #4a7a4a; }
         .menu-btn.primary:hover { background: #5a8a5a; }
-        .menu-btn.danger { background: #6a2a2a; }
-        .menu-btn.danger:hover { background: #8a3a3a; }
         .login-box { background: #1a1a1a; padding: 20px; border-radius: 12px; }
         .login-box input { width: 100%; padding: 12px; margin: 6px 0; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
         .login-box button { width: 100%; padding: 12px; background: #4a7a4a; border: none; color: #fff; font-weight: bold; border-radius: 6px; margin-top: 6px; }
-        .login-box .error { color: #c44; margin-top: 8px; }
+        .server-list { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; max-height: 300px; overflow-y: auto; }
+        .server-item { padding: 8px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+        .server-item button { background: #4a7a4a; border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        .server-item .status { font-size: 12px; padding: 2px 8px; border-radius: 12px; }
+        .server-item .status.online { color: #4a4; }
+        .server-item .status.offline { color: #a44; }
+        .back-btn { background: #2a2a2a; border: none; color: #aaa; padding: 8px 16px; border-radius: 20px; margin-bottom: 10px; cursor: pointer; }
+        .hidden { display: none; }
+        .loading { color: #aaa; text-align: center; padding: 20px; }
         .top-bar { display: flex; justify-content: space-between; background: #1a1a1a; padding: 8px 12px; border-radius: 8px; flex-wrap: wrap; margin-bottom: 6px; }
         .res { display: flex; gap: 10px; flex-wrap: wrap; font-size: 14px; }
         .res span { background: #2a2a2a; padding: 4px 10px; border-radius: 16px; }
@@ -43,16 +49,7 @@
         .chat-input { display: flex; gap: 6px; }
         .chat-input input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
         .chat-input button { padding: 8px 16px; background: #4a6a8a; border: none; color: #fff; border-radius: 6px; }
-        .hidden { display: none !important; }
         .info { font-size: 12px; color: #888; padding: 4px 0; }
-        .server-list { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; max-height: 200px; overflow-y: auto; }
-        .server-item { padding: 8px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
-        .server-item button { background: #4a7a4a; border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
-        .server-item .del-btn { background: #6a2a2a; }
-        .back-btn { background: #2a2a2a; border: none; color: #aaa; padding: 8px 16px; border-radius: 20px; margin-bottom: 10px; cursor: pointer; }
-        .add-server { display: flex; gap: 6px; margin: 10px 0; }
-        .add-server input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
-        .add-server button { background: #4a6a8a; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
         .modal-inner { background: #1a1a1a; padding: 20px; border-radius: 12px; max-width: 350px; width: 100%; max-height: 80vh; overflow-y: auto; }
         .modal-inner h3 { margin-top: 0; }
@@ -61,10 +58,7 @@
         .modal-inner .btn-danger { background: #6a2a2a; }
         .modal-inner .btn-craft { background: #2a4a6a; }
         .craft-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a2a; }
-        .status { font-size: 12px; }
-        .online { color: #4a4; }
-        .offline { color: #a44; }
-        .modal.hidden { display: none !important; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -72,39 +66,24 @@
     <!-- ГЛАВНОЕ МЕНЮ -->
     <div id="menuScreen" class="menu-box">
         <h1>🔰 York</h1>
-        <h2>Выбери режим</h2>
-        <button class="menu-btn primary" onclick="showSingleplayer()">🌍 Одиночная игра</button>
-        <button class="menu-btn" onclick="showMultiplayer()">🌐 Мультиплеер</button>
-    </div>
-
-    <!-- ОДИНОЧНАЯ ИГРА -->
-    <div id="singleplayerScreen" class="hidden">
-        <div class="menu-box" style="padding:15px;">
-            <button class="back-btn" onclick="showMenu()">← Назад</button>
-            <h3>🌍 Одиночный мир</h3>
-            <input id="worldName" placeholder="Название мира" style="width:100%;padding:10px;background:#2a2a2a;border:none;color:#fff;border-radius:6px;margin:6px 0;">
-            <button class="menu-btn primary" onclick="createSingleplayer()">Создать мир</button>
-            <div id="singleplayerList" class="server-list"></div>
+        <h2>Выберите сервер</h2>
+        <div id="serverList" class="server-list">
+            <div class="loading">⏳ Загрузка серверов...</div>
         </div>
+        <button class="menu-btn" onclick="loadServers()">🔄 Обновить</button>
     </div>
 
-    <!-- МУЛЬТИПЛЕЕР -->
-    <div id="multiplayerScreen" class="hidden">
-        <div class="menu-box" style="padding:15px;">
-            <button class="back-btn" onclick="showMenu()">← Назад</button>
-            <h3>🌐 Мультиплеер</h3>
-            <div id="serverList" class="server-list"></div>
-            <div class="add-server">
-                <input id="serverUrlInput" placeholder="Ссылка на сервер">
-                <button onclick="addServer()">➕ Добавить</button>
-            </div>
-            <div id="loginBox">
-                <input id="loginUser" placeholder="Никнейм">
-                <input id="loginPass" type="password" placeholder="Пароль">
-                <button onclick="login()">Войти</button>
-                <button onclick="register()" style="background:#3a3a6a;">Регистрация</button>
-                <div id="loginError" class="error"></div>
-            </div>
+    <!-- СТРАНИЦА ВХОДА НА СЕРВЕР -->
+    <div id="loginScreen" class="hidden">
+        <div class="login-box">
+            <h2>🔐 Вход на сервер</h2>
+            <p id="serverNameDisplay" style="color:#8a8;margin-bottom:10px;"></p>
+            <input id="loginUser" placeholder="Ваш ник в игре">
+            <input id="loginPass" type="password" placeholder="Пароль">
+            <button onclick="loginToServer()">Войти</button>
+            <button onclick="registerOnServer()" style="background:#3a3a6a;margin-top:6px;">Зарегистрироваться</button>
+            <button onclick="backToMenu()" style="background:#1a2a1a;margin-top:6px;">← Назад</button>
+            <div id="loginError" style="color:#c44;margin-top:8px;"></div>
         </div>
     </div>
 
@@ -121,7 +100,7 @@
                 <span>🪓 <span id="axe">0</span></span>
                 <span>💥⭐ <span id="upgraded_dynamite">0</span></span>
             </div>
-            <div><span id="playerName" style="color:#8a8;"></span> <span id="serverName" style="color:#aaa;font-size:12px;"></span></div>
+            <div><span id="playerName" style="color:#8a8;"></span> <span id="serverNameGame" style="color:#aaa;font-size:12px;"></span></div>
         </div>
 
         <div class="actions">
@@ -147,278 +126,154 @@
         </div>
     </div>
 
-    <!-- МОДАЛКИ — ВСЕ СКРЫТЫ -->
+    <!-- МОДАЛКА КРАФТА -->
     <div id="craftModal" class="modal hidden">
         <div class="modal-inner">
             <h3>🔧 Крафт</h3>
             <div id="craftList"></div>
-            <button onclick="closeModal('craftModal')">Закрыть</button>
-        </div>
-    </div>
-
-    <div id="houseModal" class="modal hidden">
-        <div class="modal-inner">
-            <h3>🏠 Дом</h3>
-            <div id="houseMenu"></div>
-            <button onclick="closeModal('houseModal')">Закрыть</button>
-        </div>
-    </div>
-
-    <div id="chestModal" class="modal hidden">
-        <div class="modal-inner">
-            <h3>📦 Сундук</h3>
-            <div id="chestInventory"></div>
-            <button onclick="closeModal('chestModal')">Закрыть</button>
+            <button onclick="closeModal()">Закрыть</button>
         </div>
     </div>
 </div>
 
 <script>
     // ========== НАСТРОЙКИ ==========
+    const API_URL = 'https://york-server.onrender.com';
     const SIZE = 150;
-    const SERVER_ID = 1;
 
     let currentUser = null;
-    let currentMode = null;
-    let currentWorld = null;
-    let currentServerUrl = null;
+    let currentServer = null;
     let resources = { wood: 0, stone: 0, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
     let worldData = {};
     let selectedCell = null;
     let boomMode = false;
     let eventSource = null;
+    let serverList = [];
 
-    // ========== ПРИНУДИТЕЛЬНОЕ ЗАКРЫТИЕ ВСЕХ МОДАЛОК ==========
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.modal').forEach(el => el.classList.add('hidden'));
-    });
-
-    // ========== ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛКИ ==========
-    window.closeModal = function(id) {
-        const el = document.getElementById(id);
-        if (el) {
-            el.classList.add('hidden');
+    // ========== ЗАГРУЗКА СПИСКА СЕРВЕРОВ ==========
+    async function loadServers() {
+        const list = document.getElementById('serverList');
+        list.innerHTML = '<div class="loading">⏳ Загрузка...</div>';
+        try {
+            const resp = await fetch(API_URL + '/get_servers');
+            const data = await resp.json();
+            if (Array.isArray(data)) {
+                serverList = data;
+                renderServerList();
+            } else {
+                list.innerHTML = '<div style="color:#c44;">❌ Ошибка загрузки серверов</div>';
+            }
+        } catch (e) {
+            list.innerHTML = '<div style="color:#c44;">❌ Сервер недоступен</div>';
         }
-    };
-
-    // ========== УПРАВЛЕНИЕ СЕРВЕРАМИ ==========
-    function getServers() {
-        return JSON.parse(localStorage.getItem('york_servers') || '[]');
-    }
-
-    function saveServers(servers) {
-        localStorage.setItem('york_servers', JSON.stringify(servers));
-    }
-
-    function addServer() {
-        const url = document.getElementById('serverUrlInput').value.trim();
-        if (!url) { alert('Введите ссылку на сервер'); return; }
-        let servers = getServers();
-        if (servers.find(s => s.url === url)) { alert('Сервер уже добавлен'); return; }
-        servers.push({ url, name: url.replace(/^https?:\/\//, '').split('.')[0] });
-        saveServers(servers);
-        document.getElementById('serverUrlInput').value = '';
-        renderServerList();
-    }
-
-    function removeServer(url) {
-        let servers = getServers();
-        servers = servers.filter(s => s.url !== url);
-        saveServers(servers);
-        renderServerList();
     }
 
     function renderServerList() {
         const list = document.getElementById('serverList');
-        const servers = getServers();
-        if (servers.length === 0) {
-            list.innerHTML = '<div style="padding:10px;color:#666;">Нет серверов. Добавь по ссылке!</div>';
+        if (serverList.length === 0) {
+            list.innerHTML = '<div style="color:#6a8a6a;">📭 Серверов пока нет</div>';
             return;
         }
-        list.innerHTML = servers.map(s => `
+        list.innerHTML = serverList.map(s => `
             <div class="server-item">
-                <span>🌐 ${s.name}</span>
+                <span>🌐 <b>${s.name}</b> (${s.admin})</span>
                 <div>
-                    <span class="status" id="status_${s.url}">⏳ проверка...</span>
-                    <button onclick="connectToServer('${s.url}')">Подключиться</button>
-                    <button class="del-btn" onclick="removeServer('${s.url}')">🗑️</button>
+                    <span class="status ${s.status}">${s.status === 'online' ? '🟢 Онлайн' : '🔴 Офлайн'}</span>
+                    <button onclick="connectToServer(${s.id})">Войти</button>
                 </div>
             </div>
         `).join('');
-        servers.forEach(s => checkServerStatus(s.url));
     }
 
-    async function checkServerStatus(url) {
-        const el = document.getElementById('status_' + url);
-        if (!el) return;
-        try {
-            const resp = await fetch(url + '/get_servers');
-            if (resp.ok) {
-                el.textContent = '✅ онлайн';
-                el.className = 'status online';
-            } else {
-                el.textContent = '❌ офлайн';
-                el.className = 'status offline';
-            }
-        } catch (e) {
-            el.textContent = '❌ офлайн';
-            el.className = 'status offline';
-        }
-    }
-
-    function connectToServer(url) {
-        currentServerUrl = url;
-        document.getElementById('loginBox').classList.remove('hidden');
-        const saved = JSON.parse(localStorage.getItem('york_credentials_' + url) || '{}');
-        document.getElementById('loginUser').value = saved.username || '';
-        document.getElementById('loginPass').value = saved.password || '';
+    // ========== ПОДКЛЮЧЕНИЕ К СЕРВЕРУ ==========
+    function connectToServer(serverId) {
+        const server = serverList.find(s => s.id === serverId);
+        if (!server) return;
+        currentServer = server;
+        document.getElementById('serverNameDisplay').textContent = `🌐 ${server.name} (админ: ${server.admin})`;
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('loginError').textContent = '';
     }
 
-    // ========== ЛОГИН ==========
-    async function login() {
+    function backToMenu() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('menuScreen').classList.remove('hidden');
+    }
+
+    // ========== ЛОГИН НА СЕРВЕР ==========
+    async function loginToServer() {
         const username = document.getElementById('loginUser').value.trim();
         const password = document.getElementById('loginPass').value.trim();
-        if (!username || !password) { showError('Заполните все поля'); return; }
-        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
-        
-        localStorage.setItem('york_credentials_' + currentServerUrl, JSON.stringify({ username, password }));
-        
-        const result = await apiCall('/login', 'POST', { username, password });
-        if (result.success) {
-            currentUser = username;
-            currentMode = 'multi';
-            currentWorld = 'York Wibe';
-            const resData = await apiCall('/get_resources', 'POST', { username });
-            resources = { 
-                wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, 
-                dynamite: resData.dynamite || 0, gold: resData.gold || 0,
-                pickaxe: resData.pickaxe || 0, axe: resData.axe || 0,
-                upgraded_dynamite: resData.upgraded_dynamite || 0
-            };
-            const world = await apiCall('/get_world', 'POST', { server_id: SERVER_ID });
-            worldData = world;
-            enterGame('Мультиплеер: ' + currentWorld, result.admin_prefix);
-            startChatStream();
-        } else {
-            showError(result.error || 'Ошибка входа');
+        if (!username || !password) {
+            showLoginError('Заполните все поля');
+            return;
         }
+        // Здесь можно добавить проверку пароля через бэкенд, пока просто вход
+        currentUser = username;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('playerName').textContent = currentUser;
+        document.getElementById('serverNameGame').textContent = currentServer.name;
+        await loadGameData();
     }
 
-    async function register() {
+    async function registerOnServer() {
         const username = document.getElementById('loginUser').value.trim();
         const password = document.getElementById('loginPass').value.trim();
-        if (!username || !password) { showError('Заполните все поля'); return; }
-        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
-        const result = await apiCall('/register', 'POST', { username, password });
-        if (result.success) {
-            showError('✅ Зарегистрирован! Теперь войдите.');
-        } else {
-            showError(result.error || 'Ошибка регистрации');
+        if (!username || !password) {
+            showLoginError('Заполните все поля');
+            return;
         }
+        // Регистрация — пока просто вход
+        currentUser = username;
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('playerName').textContent = currentUser;
+        document.getElementById('serverNameGame').textContent = currentServer.name;
+        await loadGameData();
     }
 
-    function showError(msg) {
-        const el = document.getElementById('loginError');
-        el.textContent = msg;
-        setTimeout(() => el.textContent = '', 4000);
+    function showLoginError(msg) {
+        document.getElementById('loginError').textContent = msg;
+        setTimeout(() => document.getElementById('loginError').textContent = '', 4000);
     }
 
-    // ========== API ==========
-    async function apiCall(endpoint, method = 'POST', data = null) {
-        if (!currentServerUrl) { return { success: false, error: 'Сервер не выбран' }; }
+    // ========== ЗАГРУЗКА ДАННЫХ ИГРЫ ==========
+    async function loadGameData() {
+        // Загружаем мир для сервера
         try {
-            const options = { method, headers: { 'Content-Type': 'application/json' } };
-            if (data) options.body = JSON.stringify(data);
-            const resp = await fetch(currentServerUrl + endpoint, options);
-            return await resp.json();
+            const resp = await fetch(API_URL + '/get_world', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ server_id: currentServer.id })
+            });
+            const data = await resp.json();
+            if (data && !data.error) {
+                worldData = data;
+            } else {
+                // Генерируем новый мир
+                worldData = generateWorld(SIZE);
+            }
         } catch (e) {
-            console.error('API ошибка:', e);
-            return { success: false, error: 'Сервер недоступен' };
-        }
-    }
-
-    // ========== ЧАТ В РЕАЛЬНОМ ВРЕМЕНИ ==========
-    function startChatStream() {
-        if (eventSource) { eventSource.close(); eventSource = null; }
-        if (!currentServerUrl) return;
-        try {
-            eventSource = new EventSource(currentServerUrl + '/stream_chat');
-            eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                const box = document.getElementById('chatBox');
-                const div = document.createElement('div');
-                div.innerHTML = `<b>${data.user}</b> ${data.msg} <span style="color:#666;font-size:10px;">${data.time || ''}</span>`;
-                box.appendChild(div);
-                box.scrollTop = box.scrollHeight;
-            };
-            eventSource.onerror = function() {
-                setTimeout(startChatStream, 3000);
-            };
-        } catch (e) {
-            console.error('SSE ошибка:', e);
-        }
-    }
-
-    // ========== ОДИНОЧНАЯ ИГРА ==========
-    function loadSingleplayerList() {
-        const list = document.getElementById('singleplayerList');
-        const worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
-        list.innerHTML = worlds.length ? worlds.map(w => `
-            <div class="server-item">
-                <span>🌍 ${w}</span>
-                <div>
-                    <button onclick="loadSingleplayer('${w}')">Играть</button>
-                    <button class="del-btn" onclick="deleteSingleplayer('${w}')">🗑️</button>
-                </div>
-            </div>
-        `).join('') : '<div style="padding:10px;color:#666;">Нет миров. Создай новый!</div>';
-    }
-
-    function createSingleplayer() {
-        const name = document.getElementById('worldName').value.trim();
-        if (!name) { alert('Введите название мира'); return; }
-        let worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
-        if (worlds.includes(name)) { alert('Мир уже существует'); return; }
-        worlds.push(name);
-        localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
-        const world = generateWorld(SIZE);
-        localStorage.setItem('york_singleplayer_' + name, JSON.stringify({ world, resources: { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 } }));
-        document.getElementById('worldName').value = '';
-        loadSingleplayerList();
-        loadSingleplayer(name);
-    }
-
-    function deleteSingleplayer(name) {
-        if (!confirm(`Удалить мир "${name}"?`)) return;
-        let worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
-        worlds = worlds.filter(w => w !== name);
-        localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
-        localStorage.removeItem('york_singleplayer_' + name);
-        loadSingleplayerList();
-    }
-
-    function loadSingleplayer(name) {
-        currentMode = 'single';
-        currentWorld = name;
-        currentServerUrl = null;
-        const data = JSON.parse(localStorage.getItem('york_singleplayer_' + name) || 'null');
-        if (data) {
-            worldData = data.world;
-            resources = data.resources || { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
-        } else {
             worldData = generateWorld(SIZE);
-            resources = { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
         }
-        currentUser = 'Игрок';
-        enterGame('Одиночный мир: ' + name, '');
-    }
-
-    function saveSingleplayer() {
-        if (currentMode === 'single' && currentWorld) {
-            const data = { world: worldData, resources: resources };
-            localStorage.setItem('york_singleplayer_' + currentWorld, JSON.stringify(data));
-        }
+        // Загружаем ресурсы
+        resources = { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
+        updateUI();
+        renderMap();
+        setupDrag();
+        // Загружаем чат
+        try {
+            const resp = await fetch(API_URL + '/get_chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ server_id: currentServer.id })
+            });
+            const data = await resp.json();
+            if (Array.isArray(data)) renderChat(data);
+        } catch (e) {}
+        startChatStream();
     }
 
     // ========== ГЕНЕРАЦИЯ МИРА ==========
@@ -438,34 +293,6 @@
             }
         }
         return world;
-    }
-
-    // ========== НАВИГАЦИЯ ==========
-    function showMenu() { hideAll(); document.getElementById('menuScreen').classList.remove('hidden'); }
-    function showSingleplayer() { hideAll(); document.getElementById('singleplayerScreen').classList.remove('hidden'); loadSingleplayerList(); }
-    function showMultiplayer() { hideAll(); document.getElementById('multiplayerScreen').classList.remove('hidden'); renderServerList(); document.getElementById('loginBox').classList.remove('hidden'); }
-    function hideAll() {
-        ['menuScreen', 'singleplayerScreen', 'multiplayerScreen', 'gameScreen'].forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
-    }
-
-    // ========== ВХОД В ИГРУ ==========
-    function enterGame(serverName, adminPrefix) {
-        hideAll();
-        document.getElementById('gameScreen').classList.remove('hidden');
-        document.getElementById('playerName').textContent = (adminPrefix ? adminPrefix + ' ' : '') + (currentUser || 'Игрок');
-        document.getElementById('serverName').textContent = serverName;
-        updateUI();
-        renderMap();
-        if (currentMode === 'multi') { startChatStream(); }
-        setupDrag();
-    }
-
-    function leaveGame() {
-        if (currentMode === 'single') saveSingleplayer();
-        if (eventSource) { eventSource.close(); eventSource = null; }
-        showMenu();
     }
 
     // ========== КАРТА ==========
@@ -504,15 +331,15 @@
         const data = worldData[key] || { type: 'grass', owner: null, house_level: 0 };
         document.getElementById('selectedInfo').textContent = `[${x},${y}] ${data.type}${data.owner ? ' 🏠'+data.owner+' (lv'+data.house_level+')' : ''}`;
         selectedCell = { x, y };
-        
         if (boomMode) { boomMode = false; doBoom(x, y); return; }
-        
         if (data.type === 'house' && data.owner === currentUser) {
-            openHouseMenu(x, y, data.house_level || 1);
+            // Меню дома
+            addChatMessage('Система', `🏠 Дом (уровень ${data.house_level || 1})`, '');
+            addChatMessage('Системa', `📋 Команды: /house upgrade, /house chest`, '');
         }
     }
 
-    // ========== ПЕРЕТАСКИВАНИЕ И ЗУМ ==========
+    // ========== ПЕРЕТАСКИВАНИЕ ==========
     let startX, startY, startOffX, startOffY;
 
     function setupDrag() {
@@ -590,7 +417,7 @@
         resources[resKey] += amount;
         data.type = 'grass';
         data.owner = null;
-        await saveAll();
+        await saveGameData();
         updateUI();
         renderMap();
     }
@@ -605,56 +432,106 @@
         if (resources.wood < 5 || resources.stone < 3) { alert('Нужно 5 дерева и 3 камня'); return; }
         resources.wood -= 5; resources.stone -= 3;
         data.type = 'house'; data.owner = currentUser; data.house_level = 1;
-        await saveAll();
+        await saveGameData();
         updateUI();
         renderMap();
-        sendChatMessage('🏠 ' + currentUser + ' построил дом!', true);
+        addChatMessage('Система', '🏠 ' + currentUser + ' построил дом!', '');
     }
 
     function prepareBoom() {
-        if (resources.upgraded_dynamite > 0) {
-            if (confirm('Использовать улучшенный динамит (взрыв 5x5)?')) {
-                boomMode = true;
-                boomType = 'upgraded';
-                alert('💣 Выбери клетку для мощного взрыва');
-                return;
-            }
-        }
         if (resources.dynamite < 1) { alert('Нет динамита! Скрафти его.'); return; }
         boomMode = true;
-        boomType = 'normal';
         alert('💣 Выбери клетку для взрыва');
     }
 
-    let boomType = 'normal';
-
     async function doBoom(x, y) {
-        let radius = 1;
-        let cost = 1;
-        if (boomType === 'upgraded') {
-            radius = 2;
-            cost = 1;
-            if (resources.upgraded_dynamite < 1) return;
-            resources.upgraded_dynamite -= cost;
-        } else {
-            if (resources.dynamite < cost) return;
-            resources.dynamite -= cost;
-        }
-        
-        for (let dx = -radius; dx <= radius; dx++) {
-            for (let dy = -radius; dy <= radius; dy++) {
+        if (resources.dynamite < 1) return;
+        resources.dynamite -= 1;
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
                 const k = (x+dx) + ',' + (y+dy);
                 if (worldData[k]) {
                     worldData[k] = { type: 'grass', owner: null, house_level: 0 };
                 }
             }
         }
-        
-        await saveAll();
+        await saveGameData();
         updateUI();
         renderMap();
-        sendChatMessage('💥 ' + currentUser + ' взорвал бомбу!', true);
+        addChatMessage('Система', '💥 ' + currentUser + ' взорвал бомбу!', '');
         boomMode = false;
+    }
+
+    // ========== СОХРАНЕНИЕ ==========
+    async function saveGameData() {
+        try {
+            await fetch(API_URL + '/save_world', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ server_id: currentServer.id, cells: worldData })
+            });
+        } catch (e) {}
+    }
+
+    // ========== ЧАТ ==========
+    function startChatStream() {
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        try {
+            eventSource = new EventSource(API_URL + '/stream_chat?server_id=' + currentServer.id);
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                addChatMessage(data.user, data.msg, data.time);
+            };
+            eventSource.onerror = function() {
+                setTimeout(startChatStream, 3000);
+            };
+        } catch (e) {}
+    }
+
+    async function sendChat() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+        if (msg.startsWith('/')) {
+            handleCommand(msg);
+            return;
+        }
+        try {
+            await fetch(API_URL + '/send_chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: currentUser, message: msg, server_id: currentServer.id })
+            });
+        } catch (e) {}
+    }
+
+    function addChatMessage(user, msg, time) {
+        const box = document.getElementById('chatBox');
+        const div = document.createElement('div');
+        div.innerHTML = `<b>${user}</b> ${msg} <span style="color:#666;font-size:10px;">${time || ''}</span>`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function renderChat(chatData) {
+        const box = document.getElementById('chatBox');
+        box.innerHTML = chatData.map(c => 
+            `<div><b>${c.user}</b> ${c.msg} <span style="color:#666;font-size:10px;">${c.time || ''}</span></div>`
+        ).join('');
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function handleCommand(cmd) {
+        const parts = cmd.split(' ');
+        const command = parts[0].toLowerCase();
+        if (command === '/house' && parts[1] === 'upgrade') {
+            addChatMessage('Система', '🔨 Улучшение дома требует 10 дерева, 5 камня, 2 железа', '');
+        } else if (command === '/house' && parts[1] === 'chest') {
+            addChatMessage('Система', '📦 В сундуке: пусто (команда в разработке)', '');
+        } else {
+            addChatMessage('Система', '❌ Неизвестная команда. /house upgrade, /house chest', '');
+        }
     }
 
     // ========== КРАФТЫ ==========
@@ -664,7 +541,6 @@
         const list = document.getElementById('craftList');
         const crafts = [
             { name: 'Динамит', cost: '5 камня + 3 железа + 1 золото', res: { stone: 5, iron: 3, gold: 1 }, result: { dynamite: 1 } },
-            { name: 'Улучшенный динамит', cost: '10 камня + 5 железа + 3 золота', res: { stone: 10, iron: 5, gold: 3 }, result: { upgraded_dynamite: 1 } },
             { name: 'Кирка', cost: '3 дерева + 2 железа', res: { wood: 3, iron: 2 }, result: { pickaxe: 1 } },
             { name: 'Топор', cost: '3 дерева + 2 камня', res: { wood: 3, stone: 2 }, result: { axe: 1 } }
         ];
@@ -679,238 +555,40 @@
     async function craftItem(name) {
         const crafts = {
             'Динамит': { res: { stone: 5, iron: 3, gold: 1 }, result: { dynamite: 1 } },
-            'Улучшенный динамит': { res: { stone: 10, iron: 5, gold: 3 }, result: { upgraded_dynamite: 1 } },
             'Кирка': { res: { wood: 3, iron: 2 }, result: { pickaxe: 1 } },
             'Топор': { res: { wood: 3, stone: 2 }, result: { axe: 1 } }
         };
         const craft = crafts[name];
         if (!craft) return;
-        
         for (const [res, amount] of Object.entries(craft.res)) {
             if (resources[res] < amount) {
                 alert(`Не хватает ${res}! Нужно ${amount}`);
                 return;
             }
         }
-        
         for (const [res, amount] of Object.entries(craft.res)) {
             resources[res] -= amount;
         }
         for (const [res, amount] of Object.entries(craft.result)) {
             resources[res] += amount;
         }
-        
-        await saveAll();
+        await saveGameData();
         updateUI();
-        sendChatMessage('🔧 ' + currentUser + ' скрафтил ' + name + '!', true);
-        closeModal('craftModal');
+        addChatMessage('Система', '🔧 ' + currentUser + ' скрафтил ' + name + '!', '');
+        closeModal();
     }
 
-    // ========== ДОМА ==========
-    async function openHouseMenu(x, y, level) {
-        const modal = document.getElementById('houseModal');
-        modal.classList.remove('hidden');
-        const menu = document.getElementById('houseMenu');
-        const maxLevel = 5;
-        const upgradeCosts = {
-            1: { wood: 10, stone: 5, iron: 2 },
-            2: { wood: 20, stone: 10, iron: 5 },
-            3: { wood: 40, stone: 20, iron: 10 },
-            4: { wood: 80, stone: 40, iron: 20 }
-        };
-        const cost = upgradeCosts[level];
-        const canUpgrade = level < maxLevel && cost && 
-            resources.wood >= cost.wood && resources.stone >= cost.stone && resources.iron >= cost.iron;
-        
-        menu.innerHTML = `
-            <p>Уровень дома: ${level} / ${maxLevel}</p>
-            <p>Слотов в сундуке: ${level * 5}</p>
-            ${level < maxLevel ? `
-                <p>Улучшение: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️</p>
-                <button class="btn-primary" onclick="upgradeHouse(${x},${y},${level})" ${!canUpgrade ? 'disabled style="opacity:0.4;"' : ''}>
-                    ${canUpgrade ? '🔨 Улучшить' : '❌ Не хватает ресурсов'}
-                </button>
-            ` : '<p>✅ Дом максимального уровня!</p>'}
-            <button onclick="openChest(${x},${y})">📦 Открыть сундук</button>
-        `;
+    function closeModal() {
+        document.getElementById('craftModal').classList.add('hidden');
     }
 
-    async function upgradeHouse(x, y, currentLevel) {
-        const result = await apiCall('/upgrade_house', 'POST', { x, y, owner: currentUser });
-        if (result.success) {
-            const key = x + ',' + y;
-            worldData[key].house_level = result.new_level;
-            await saveAll();
-            renderMap();
-            sendChatMessage('🏠 ' + currentUser + ' улучшил дом до уровня ' + result.new_level + '!', true);
-            closeModal('houseModal');
-            updateUI();
-        } else {
-            alert(result.error || 'Ошибка улучшения');
-        }
+    function leaveGame() {
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        document.getElementById('gameScreen').classList.add('hidden');
+        document.getElementById('menuScreen').classList.remove('hidden');
+        loadServers();
     }
 
-    async function openChest(x, y) {
-        const modal = document.getElementById('chestModal');
-        modal.classList.remove('hidden');
-        const key = x + ',' + y;
-        const data = worldData[key];
-        if (!data || data.owner !== currentUser) { alert('Это не твой дом!'); return; }
-        
-        const level = data.house_level || 1;
-        const slots = level * 5;
-        
-        const container = document.getElementById('chestInventory');
-        container.innerHTML = `
-            <p>📦 Сундук (${slots} слотов)</p>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;">
-                ${Array.from({length: slots}, (_, i) => `
-                    <div style="background:#2a2a2a;padding:8px;border-radius:4px;min-width:30px;text-align:center;color:#666;">пусто</div>
-                `).join('')}
-            </div>
-            <p style="font-size:12px;color:#888;">🔧 Команды для сундука в разработке...</p>
-        `;
-    }
-
-    // ========== КОМАНДЫ ЧЕРЕЗ ЧАТ ==========
-    async function sendChat() {
-        const input = document.getElementById('chatInput');
-        const msg = input.value.trim();
-        if (!msg) return;
-        input.value = '';
-        
-        if (msg.startsWith('/')) {
-            await handleCommand(msg);
-            return;
-        }
-        
-        if (currentMode === 'single') {
-            const box = document.getElementById('chatBox');
-            const div = document.createElement('div');
-            div.innerHTML = `<b>${currentUser || 'Игрок'}</b> ${msg}`;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-            return;
-        }
-        await apiCall('/send_chat', 'POST', { username: currentUser, message: msg, server_id: SERVER_ID });
-    }
-
-    async function sendChatMessage(msg, isSystem = false) {
-        if (currentMode === 'single') {
-            const box = document.getElementById('chatBox');
-            const div = document.createElement('div');
-            div.innerHTML = `<b>${isSystem ? 'Система' : (currentUser || 'Игрок')}</b> ${msg}`;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-            return;
-        }
-        await apiCall('/send_chat', 'POST', { 
-            username: isSystem ? 'Система' : currentUser, 
-            message: msg, 
-            server_id: SERVER_ID 
-        });
-    }
-
-    async function handleCommand(cmd) {
-        const parts = cmd.split(' ');
-        const command = parts[0].toLowerCase();
-        
-        if (command === '/mute' && parts.length >= 3) {
-            const target = parts[1];
-            const duration = parts[2];
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'mute', target, duration });
-            if (result.success) {
-                sendChatMessage('🔇 ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        if (command === '/unmute' && parts.length >= 2) {
-            const target = parts[1];
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unmute', target });
-            if (result.success) {
-                sendChatMessage('🔊 ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        if (command === '/ban' && parts.length >= 3) {
-            const target = parts[1];
-            const reason = parts.slice(2).join(' ');
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'ban', target, reason });
-            if (result.success) {
-                sendChatMessage('🔨 ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        if (command === '/tempban' && parts.length >= 4) {
-            const target = parts[1];
-            const reason = parts.slice(2, -1).join(' ');
-            const duration = parts[parts.length - 1];
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'tempban', target, reason, duration });
-            if (result.success) {
-                sendChatMessage('⏳ ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        if (command === '/unban' && parts.length >= 2) {
-            const target = parts[1];
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unban', target });
-            if (result.success) {
-                sendChatMessage('🔓 ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        if (command === '/addadmin' && parts.length >= 3) {
-            const target = parts[1];
-            const level = parts[2];
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'addadmin', target, level });
-            if (result.success) {
-                sendChatMessage('⭐ ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        if (command === '/removeadmin' && parts.length >= 2) {
-            const target = parts[1];
-            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'removeadmin', target });
-            if (result.success) {
-                sendChatMessage('⭐ ' + result.message, true);
-            } else {
-                sendChatMessage('❌ ' + result.error, true);
-            }
-            return;
-        }
-        
-        sendChatMessage('❌ Неизвестная команда. Доступно: /mute, /unmute, /ban, /tempban, /unban, /addadmin, /removeadmin', true);
-    }
-
-    // ========== СОХРАНЕНИЕ ==========
-    async function saveAll() {
-        if (currentMode === 'single') {
-            saveSingleplayer();
-        } else if (currentMode === 'multi' && currentServerUrl) {
-            await apiCall('/save_resources', 'POST', { username: currentUser, ...resources });
-            await apiCall('/save_world', 'POST', { server_id: SERVER_ID, cells: worldData });
-        }
-    }
-
-    // ========== UI ==========
     function updateUI() {
         document.getElementById('wood').textContent = Math.floor(resources.wood);
         document.getElementById('stone').textContent = Math.floor(resources.stone);
@@ -922,8 +600,8 @@
         document.getElementById('upgraded_dynamite').textContent = Math.floor(resources.upgraded_dynamite);
     }
 
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
-    showMenu();
+    // ========== ЗАПУСК ==========
+    loadServers();
     console.log('🔰 York загружен!');
 </script>
 </body>
