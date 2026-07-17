@@ -38,11 +38,8 @@
         .water { background: #2a4a6a; }
         .iron { background: #8a7a6a; }
         .gold { background: #d4a020; }
-        .chat-box { background: #1a1a1a; border-radius: 8px; padding: 6px; height: 140px; overflow-y: auto; font-size: 12px; margin: 6px 0; }
+        .chat-box { background: #1a1a1a; border-radius: 8px; padding: 6px; height: 120px; overflow-y: auto; font-size: 12px; margin: 6px 0; }
         .chat-box div { padding: 2px 0; border-bottom: 1px solid #222; }
-        .chat-box .system { color: #8a8; }
-        .chat-box .admin { color: #ffa500; }
-        .chat-box .error { color: #c44; }
         .chat-input { display: flex; gap: 6px; }
         .chat-input input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
         .chat-input button { padding: 8px 16px; background: #4a6a8a; border: none; color: #fff; border-radius: 6px; }
@@ -56,9 +53,18 @@
         .add-server { display: flex; gap: 6px; margin: 10px 0; }
         .add-server input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
         .add-server button { background: #4a6a8a; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-inner { background: #1a1a1a; padding: 20px; border-radius: 12px; max-width: 350px; width: 100%; max-height: 80vh; overflow-y: auto; }
+        .modal-inner h3 { margin-top: 0; }
+        .modal-inner button { width: 100%; padding: 10px; margin: 6px 0; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; cursor: pointer; }
+        .modal-inner .btn-primary { background: #4a7a4a; }
+        .modal-inner .btn-danger { background: #6a2a2a; }
+        .modal-inner .btn-craft { background: #2a4a6a; }
+        .craft-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a2a; }
         .status { font-size: 12px; }
         .online { color: #4a4; }
         .offline { color: #a44; }
+        .modal.hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -126,7 +132,6 @@
             <button onclick="buildHouse()">🏠 Дом</button>
             <button class="boom" onclick="prepareBoom()">💣 Взорвать</button>
             <button class="craft" onclick="openCraftModal()">🔧 Крафт</button>
-            <button onclick="showInventory()">📦 Инвентарь</button>
             <button onclick="leaveGame()">🚪 Выйти</button>
         </div>
 
@@ -137,17 +142,33 @@
 
         <div class="chat-box" id="chatBox"></div>
         <div class="chat-input">
-            <input id="chatInput" placeholder="Чат или команда (/help)" onkeydown="if(event.key==='Enter')sendChat()">
+            <input id="chatInput" placeholder="Чат..." onkeydown="if(event.key==='Enter')sendChat()">
             <button onclick="sendChat()">➤</button>
         </div>
     </div>
 
-    <!-- МОДАЛКА КРАФТА -->
+    <!-- МОДАЛКИ — ВСЕ СКРЫТЫ -->
     <div id="craftModal" class="modal hidden">
         <div class="modal-inner">
             <h3>🔧 Крафт</h3>
             <div id="craftList"></div>
             <button onclick="closeModal('craftModal')">Закрыть</button>
+        </div>
+    </div>
+
+    <div id="houseModal" class="modal hidden">
+        <div class="modal-inner">
+            <h3>🏠 Дом</h3>
+            <div id="houseMenu"></div>
+            <button onclick="closeModal('houseModal')">Закрыть</button>
+        </div>
+    </div>
+
+    <div id="chestModal" class="modal hidden">
+        <div class="modal-inner">
+            <h3>📦 Сундук</h3>
+            <div id="chestInventory"></div>
+            <button onclick="closeModal('chestModal')">Закрыть</button>
         </div>
     </div>
 </div>
@@ -166,12 +187,19 @@
     let selectedCell = null;
     let boomMode = false;
     let eventSource = null;
-    let selectedHouse = null; // {x, y} для дома
 
-    // ========== МОДАЛКИ ==========
-    function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
-    }
+    // ========== ПРИНУДИТЕЛЬНОЕ ЗАКРЫТИЕ ВСЕХ МОДАЛОК ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.modal').forEach(el => el.classList.add('hidden'));
+    });
+
+    // ========== ФУНКЦИЯ ЗАКРЫТИЯ МОДАЛКИ ==========
+    window.closeModal = function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+        }
+    };
 
     // ========== УПРАВЛЕНИЕ СЕРВЕРАМИ ==========
     function getServers() {
@@ -261,8 +289,15 @@
             currentUser = username;
             currentMode = 'multi';
             currentWorld = 'York Wibe';
-            await loadResources();
-            await loadWorld();
+            const resData = await apiCall('/get_resources', 'POST', { username });
+            resources = { 
+                wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, 
+                dynamite: resData.dynamite || 0, gold: resData.gold || 0,
+                pickaxe: resData.pickaxe || 0, axe: resData.axe || 0,
+                upgraded_dynamite: resData.upgraded_dynamite || 0
+            };
+            const world = await apiCall('/get_world', 'POST', { server_id: SERVER_ID });
+            worldData = world;
             enterGame('Мультиплеер: ' + currentWorld, result.admin_prefix);
             startChatStream();
         } else {
@@ -303,21 +338,6 @@
         }
     }
 
-    async function loadResources() {
-        const resData = await apiCall('/get_resources', 'POST', { username: currentUser });
-        resources = { 
-            wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, 
-            dynamite: resData.dynamite || 0, gold: resData.gold || 0,
-            pickaxe: resData.pickaxe || 0, axe: resData.axe || 0,
-            upgraded_dynamite: resData.upgraded_dynamite || 0
-        };
-    }
-
-    async function loadWorld() {
-        const world = await apiCall('/get_world', 'POST', { server_id: SERVER_ID });
-        worldData = world;
-    }
-
     // ========== ЧАТ В РЕАЛЬНОМ ВРЕМЕНИ ==========
     function startChatStream() {
         if (eventSource) { eventSource.close(); eventSource = null; }
@@ -326,7 +346,11 @@
             eventSource = new EventSource(currentServerUrl + '/stream_chat');
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
-                addChatMessage(data.user, data.msg, data.time);
+                const box = document.getElementById('chatBox');
+                const div = document.createElement('div');
+                div.innerHTML = `<b>${data.user}</b> ${data.msg} <span style="color:#666;font-size:10px;">${data.time || ''}</span>`;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
             };
             eventSource.onerror = function() {
                 setTimeout(startChatStream, 3000);
@@ -334,21 +358,6 @@
         } catch (e) {
             console.error('SSE ошибка:', e);
         }
-    }
-
-    function addChatMessage(user, msg, time) {
-        const box = document.getElementById('chatBox');
-        const div = document.createElement('div');
-        const isSystem = user === 'Система';
-        const isAdmin = user.includes('[Модератор]') || user.includes('[Ст.Модератор]') || user.includes('[Куратор]') || user.includes('[Владыка]');
-        let cls = '';
-        if (isSystem) cls = 'system';
-        else if (isAdmin) cls = 'admin';
-        if (msg.startsWith('❌')) cls = 'error';
-        div.className = cls;
-        div.innerHTML = `<b>${user}</b> ${msg} <span style="color:#666;font-size:10px;">${time || ''}</span>`;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
     }
 
     // ========== ОДИНОЧНАЯ ИГРА ==========
@@ -451,10 +460,6 @@
         renderMap();
         if (currentMode === 'multi') { startChatStream(); }
         setupDrag();
-        // Приветствие
-        setTimeout(() => {
-            addChatMessage('Система', '📖 Введи /help для списка команд', '');
-        }, 500);
     }
 
     function leaveGame() {
@@ -502,341 +507,9 @@
         
         if (boomMode) { boomMode = false; doBoom(x, y); return; }
         
-        // Если клик по дому — показываем меню в чате
         if (data.type === 'house' && data.owner === currentUser) {
-            selectedHouse = { x, y };
-            showHouseMenu(x, y, data.house_level || 1);
-        } else if (data.type === 'house' && data.owner && data.owner !== currentUser) {
-            addChatMessage('Система', '❌ Это дом игрока ' + data.owner, '');
+            openHouseMenu(x, y, data.house_level || 1);
         }
-    }
-
-    // ========== МЕНЮ ДОМА В ЧАТЕ ==========
-    function showHouseMenu(x, y, level) {
-        const maxLevel = 5;
-        const upgradeCosts = {
-            1: { wood: 10, stone: 5, iron: 2 },
-            2: { wood: 20, stone: 10, iron: 5 },
-            3: { wood: 40, stone: 20, iron: 10 },
-            4: { wood: 80, stone: 40, iron: 20 }
-        };
-        const cost = upgradeCosts[level];
-        const canUpgrade = level < maxLevel && cost && 
-            resources.wood >= cost.wood && resources.stone >= cost.stone && resources.iron >= cost.iron;
-        
-        let msg = `🏠 Дом (уровень ${level}/${maxLevel})\n`;
-        msg += `📦 Слотов в сундуке: ${level * 5}\n`;
-        msg += `📋 Команды:\n`;
-        msg += `  /house upgrade — улучшить дом`;
-        if (level < maxLevel && cost) {
-            msg += ` (нужно: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️)`;
-            if (!canUpgrade) msg += ` ❌ не хватает`;
-        } else if (level >= maxLevel) {
-            msg += ` ✅ дом максимального уровня`;
-        }
-        msg += `\n  /house chest — открыть сундук\n`;
-        msg += `  /inv — показать инвентарь`;
-        
-        // Отправляем в чат как системное сообщение
-        const lines = msg.split('\n');
-        lines.forEach(line => {
-            addChatMessage('Система', line, '');
-        });
-    }
-
-    // ========== ИНВЕНТАРЬ ==========
-    function showInventory() {
-        let msg = `📦 Инвентарь ${currentUser}:\n`;
-        msg += `  🪵 Древесина: ${Math.floor(resources.wood)}\n`;
-        msg += `  🪨 Камень: ${Math.floor(resources.stone)}\n`;
-        msg += `  ⛏️ Железо: ${Math.floor(resources.iron)}\n`;
-        msg += `  ✨ Золото: ${Math.floor(resources.gold)}\n`;
-        msg += `  💥 Динамит: ${Math.floor(resources.dynamite)}\n`;
-        msg += `  💥⭐ Улучш.динамит: ${Math.floor(resources.upgraded_dynamite)}\n`;
-        msg += `  🪓 Кирка: ${Math.floor(resources.pickaxe)} (увеличивает добычу камня/руды)\n`;
-        msg += `  🪓 Топор: ${Math.floor(resources.axe)} (увеличивает добычу дерева)`;
-        addChatMessage('Система', msg, '');
-    }
-
-    // ========== КОМАНДЫ ЧЕРЕЗ ЧАТ ==========
-    async function sendChat() {
-        const input = document.getElementById('chatInput');
-        const msg = input.value.trim();
-        if (!msg) return;
-        input.value = '';
-        
-        // Команды (/)
-        if (msg.startsWith('/')) {
-            await handleCommand(msg);
-            return;
-        }
-        
-        // Обычный чат
-        if (currentMode === 'single') {
-            addChatMessage(currentUser || 'Игрок', msg, '');
-            return;
-        }
-        await apiCall('/send_chat', 'POST', { username: currentUser, message: msg, server_id: SERVER_ID });
-    }
-
-    async function handleCommand(cmd) {
-        const parts = cmd.split(' ');
-        const command = parts[0].toLowerCase();
-        
-        // === /help ===
-        if (command === '/help') {
-            let msg = '📖 Доступные команды:\n';
-            msg += '  /inv — инвентарь\n';
-            msg += '  /house upgrade — улучшить дом\n';
-            msg += '  /house chest — открыть сундук\n';
-            msg += '  /chest put [предмет] [кол-во] — положить в сундук\n';
-            msg += '  /chest take [предмет] [кол-во] — взять из сундука\n';
-            msg += '  /help — эта справка\n';
-            if (currentMode === 'multi') {
-                msg += '  /mute [ник] [30m/1h] — замутить (для модераторов)\n';
-                msg += '  /ban [ник] [причина] — забанить (для модераторов)';
-            }
-            addChatMessage('Система', msg, '');
-            return;
-        }
-        
-        // === /inv ===
-        if (command === '/inv') {
-            showInventory();
-            return;
-        }
-        
-        // === /house upgrade ===
-        if (command === '/house' && parts.length >= 2 && parts[1] === 'upgrade') {
-            if (!selectedHouse) {
-                addChatMessage('Система', '❌ Сначала кликни на свой дом', '');
-                return;
-            }
-            const { x, y } = selectedHouse;
-            const key = x + ',' + y;
-            const data = worldData[key];
-            if (!data || data.type !== 'house' || data.owner !== currentUser) {
-                addChatMessage('Система', '❌ Это не твой дом', '');
-                return;
-            }
-            const level = data.house_level || 1;
-            if (level >= 5) {
-                addChatMessage('Система', '✅ Дом уже максимального уровня!', '');
-                return;
-            }
-            const costs = {
-                1: { wood: 10, stone: 5, iron: 2 },
-                2: { wood: 20, stone: 10, iron: 5 },
-                3: { wood: 40, stone: 20, iron: 10 },
-                4: { wood: 80, stone: 40, iron: 20 }
-            };
-            const cost = costs[level];
-            if (!cost) { addChatMessage('Система', '❌ Ошибка: неизвестный уровень', ''); return; }
-            if (resources.wood < cost.wood || resources.stone < cost.stone || resources.iron < cost.iron) {
-                addChatMessage('Система', `❌ Не хватает ресурсов! Нужно: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️`, '');
-                return;
-            }
-            // Списываем ресурсы
-            resources.wood -= cost.wood;
-            resources.stone -= cost.stone;
-            resources.iron -= cost.iron;
-            // Обновляем уровень дома
-            const newLevel = level + 1;
-            data.house_level = newLevel;
-            await saveAll();
-            updateUI();
-            renderMap();
-            addChatMessage('Система', `🏠 Дом улучшен до уровня ${newLevel}!`, '');
-            // Показываем обновлённое меню
-            showHouseMenu(x, y, newLevel);
-            return;
-        }
-        
-        // === /house chest ===
-        if (command === '/house' && parts.length >= 2 && parts[1] === 'chest') {
-            if (!selectedHouse) {
-                addChatMessage('Система', '❌ Сначала кликни на свой дом', '');
-                return;
-            }
-            const { x, y } = selectedHouse;
-            const key = x + ',' + y;
-            const data = worldData[key];
-            if (!data || data.type !== 'house' || data.owner !== currentUser) {
-                addChatMessage('Система', '❌ Это не твой дом', '');
-                return;
-            }
-            const level = data.house_level || 1;
-            const slots = level * 5;
-            // Показываем содержимое сундука
-            let msg = `📦 Сундук (${slots} слотов, уровень ${level}):\n`;
-            // В упрощённой версии — показываем что есть
-            const chestItems = JSON.parse(localStorage.getItem('york_chest_' + currentUser) || '{}');
-            const items = Object.entries(chestItems);
-            if (items.length === 0) {
-                msg += '  (пусто)';
-            } else {
-                items.forEach(([item, amount]) => {
-                    msg += `  ${item}: ${amount}\n`;
-                });
-            }
-            msg += `\n📋 Команды для сундука:\n`;
-            msg += `  /chest put [предмет] [кол-во] — положить\n`;
-            msg += `  /chest take [предмет] [кол-во] — взять`;
-            addChatMessage('Система', msg, '');
-            return;
-        }
-        
-        // === /chest put ===
-        if (command === '/chest' && parts.length >= 4 && parts[1] === 'put') {
-            const itemType = parts[2];
-            const amount = parseInt(parts[3]);
-            if (!amount || amount < 1) { addChatMessage('Система', '❌ Укажи количество', ''); return; }
-            // Проверяем, есть ли у игрока этот предмет
-            const resKey = itemType === 'wood' ? 'wood' : 
-                          itemType === 'stone' ? 'stone' :
-                          itemType === 'iron' ? 'iron' :
-                          itemType === 'gold' ? 'gold' :
-                          itemType === 'dynamite' ? 'dynamite' :
-                          itemType === 'upgraded_dynamite' ? 'upgraded_dynamite' : null;
-            if (!resKey || resources[resKey] === undefined) {
-                addChatMessage('Система', `❌ Неизвестный предмет: ${itemType}`, '');
-                return;
-            }
-            if (resources[resKey] < amount) {
-                addChatMessage('Система', `❌ У тебя только ${Math.floor(resources[resKey])} ${itemType}`, '');
-                return;
-            }
-            // Списываем у игрока
-            resources[resKey] -= amount;
-            // Кладём в сундук
-            const chest = JSON.parse(localStorage.getItem('york_chest_' + currentUser) || '{}');
-            chest[itemType] = (chest[itemType] || 0) + amount;
-            localStorage.setItem('york_chest_' + currentUser, JSON.stringify(chest));
-            await saveAll();
-            updateUI();
-            addChatMessage('Система', `✅ Положил ${amount} ${itemType} в сундук`, '');
-            return;
-        }
-        
-        // === /chest take ===
-        if (command === '/chest' && parts.length >= 4 && parts[1] === 'take') {
-            const itemType = parts[2];
-            const amount = parseInt(parts[3]);
-            if (!amount || amount < 1) { addChatMessage('Система', '❌ Укажи количество', ''); return; }
-            const chest = JSON.parse(localStorage.getItem('york_chest_' + currentUser) || '{}');
-            if (!chest[itemType] || chest[itemType] < amount) {
-                addChatMessage('Система', `❌ В сундуке только ${chest[itemType] || 0} ${itemType}`, '');
-                return;
-            }
-            // Забираем из сундука
-            chest[itemType] -= amount;
-            if (chest[itemType] <= 0) delete chest[itemType];
-            localStorage.setItem('york_chest_' + currentUser, JSON.stringify(chest));
-            // Добавляем игроку
-            const resKey = itemType === 'wood' ? 'wood' : 
-                          itemType === 'stone' ? 'stone' :
-                          itemType === 'iron' ? 'iron' :
-                          itemType === 'gold' ? 'gold' :
-                          itemType === 'dynamite' ? 'dynamite' :
-                          itemType === 'upgraded_dynamite' ? 'upgraded_dynamite' : null;
-            if (resKey && resources[resKey] !== undefined) {
-                resources[resKey] += amount;
-            } else {
-                addChatMessage('Система', `❌ Неизвестный предмет: ${itemType}`, '');
-                return;
-            }
-            await saveAll();
-            updateUI();
-            addChatMessage('Система', `✅ Забрал ${amount} ${itemType} из сундука`, '');
-            return;
-        }
-        
-        // === АДМИН-КОМАНДЫ (для мультиплеера) ===
-        if (currentMode === 'multi') {
-            if (command === '/mute' && parts.length >= 3) {
-                const target = parts[1];
-                const duration = parts[2];
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'mute', target, duration });
-                if (result.success) {
-                    addChatMessage('Система', '🔇 ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-            
-            if (command === '/unmute' && parts.length >= 2) {
-                const target = parts[1];
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unmute', target });
-                if (result.success) {
-                    addChatMessage('Система', '🔊 ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-            
-            if (command === '/ban' && parts.length >= 3) {
-                const target = parts[1];
-                const reason = parts.slice(2).join(' ');
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'ban', target, reason });
-                if (result.success) {
-                    addChatMessage('Система', '🔨 ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-            
-            if (command === '/tempban' && parts.length >= 4) {
-                const target = parts[1];
-                const reason = parts.slice(2, -1).join(' ');
-                const duration = parts[parts.length - 1];
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'tempban', target, reason, duration });
-                if (result.success) {
-                    addChatMessage('Система', '⏳ ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-            
-            if (command === '/unban' && parts.length >= 2) {
-                const target = parts[1];
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unban', target });
-                if (result.success) {
-                    addChatMessage('Система', '🔓 ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-            
-            if (command === '/addadmin' && parts.length >= 3) {
-                const target = parts[1];
-                const level = parts[2];
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'addadmin', target, level });
-                if (result.success) {
-                    addChatMessage('Система', '⭐ ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-            
-            if (command === '/removeadmin' && parts.length >= 2) {
-                const target = parts[1];
-                const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'removeadmin', target });
-                if (result.success) {
-                    addChatMessage('Система', '⭐ ' + result.message, '');
-                } else {
-                    addChatMessage('Система', '❌ ' + result.error, '');
-                }
-                return;
-            }
-        }
-        
-        addChatMessage('Система', '❌ Неизвестная команда. Введи /help', '');
     }
 
     // ========== ПЕРЕТАСКИВАНИЕ И ЗУМ ==========
@@ -935,9 +608,7 @@
         await saveAll();
         updateUI();
         renderMap();
-        addChatMessage('Система', '🏠 ' + currentUser + ' построил дом!', '');
-        selectedHouse = { x, y };
-        showHouseMenu(x, y, 1);
+        sendChatMessage('🏠 ' + currentUser + ' построил дом!', true);
     }
 
     function prepareBoom() {
@@ -982,7 +653,7 @@
         await saveAll();
         updateUI();
         renderMap();
-        addChatMessage('Система', '💥 ' + currentUser + ' взорвал бомбу!', '');
+        sendChatMessage('💥 ' + currentUser + ' взорвал бомбу!', true);
         boomMode = false;
     }
 
@@ -1031,8 +702,202 @@
         
         await saveAll();
         updateUI();
-        addChatMessage('Система', '🔧 ' + currentUser + ' скрафтил ' + name + '!', '');
+        sendChatMessage('🔧 ' + currentUser + ' скрафтил ' + name + '!', true);
         closeModal('craftModal');
+    }
+
+    // ========== ДОМА ==========
+    async function openHouseMenu(x, y, level) {
+        const modal = document.getElementById('houseModal');
+        modal.classList.remove('hidden');
+        const menu = document.getElementById('houseMenu');
+        const maxLevel = 5;
+        const upgradeCosts = {
+            1: { wood: 10, stone: 5, iron: 2 },
+            2: { wood: 20, stone: 10, iron: 5 },
+            3: { wood: 40, stone: 20, iron: 10 },
+            4: { wood: 80, stone: 40, iron: 20 }
+        };
+        const cost = upgradeCosts[level];
+        const canUpgrade = level < maxLevel && cost && 
+            resources.wood >= cost.wood && resources.stone >= cost.stone && resources.iron >= cost.iron;
+        
+        menu.innerHTML = `
+            <p>Уровень дома: ${level} / ${maxLevel}</p>
+            <p>Слотов в сундуке: ${level * 5}</p>
+            ${level < maxLevel ? `
+                <p>Улучшение: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️</p>
+                <button class="btn-primary" onclick="upgradeHouse(${x},${y},${level})" ${!canUpgrade ? 'disabled style="opacity:0.4;"' : ''}>
+                    ${canUpgrade ? '🔨 Улучшить' : '❌ Не хватает ресурсов'}
+                </button>
+            ` : '<p>✅ Дом максимального уровня!</p>'}
+            <button onclick="openChest(${x},${y})">📦 Открыть сундук</button>
+        `;
+    }
+
+    async function upgradeHouse(x, y, currentLevel) {
+        const result = await apiCall('/upgrade_house', 'POST', { x, y, owner: currentUser });
+        if (result.success) {
+            const key = x + ',' + y;
+            worldData[key].house_level = result.new_level;
+            await saveAll();
+            renderMap();
+            sendChatMessage('🏠 ' + currentUser + ' улучшил дом до уровня ' + result.new_level + '!', true);
+            closeModal('houseModal');
+            updateUI();
+        } else {
+            alert(result.error || 'Ошибка улучшения');
+        }
+    }
+
+    async function openChest(x, y) {
+        const modal = document.getElementById('chestModal');
+        modal.classList.remove('hidden');
+        const key = x + ',' + y;
+        const data = worldData[key];
+        if (!data || data.owner !== currentUser) { alert('Это не твой дом!'); return; }
+        
+        const level = data.house_level || 1;
+        const slots = level * 5;
+        
+        const container = document.getElementById('chestInventory');
+        container.innerHTML = `
+            <p>📦 Сундук (${slots} слотов)</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;">
+                ${Array.from({length: slots}, (_, i) => `
+                    <div style="background:#2a2a2a;padding:8px;border-radius:4px;min-width:30px;text-align:center;color:#666;">пусто</div>
+                `).join('')}
+            </div>
+            <p style="font-size:12px;color:#888;">🔧 Команды для сундука в разработке...</p>
+        `;
+    }
+
+    // ========== КОМАНДЫ ЧЕРЕЗ ЧАТ ==========
+    async function sendChat() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+        
+        if (msg.startsWith('/')) {
+            await handleCommand(msg);
+            return;
+        }
+        
+        if (currentMode === 'single') {
+            const box = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.innerHTML = `<b>${currentUser || 'Игрок'}</b> ${msg}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return;
+        }
+        await apiCall('/send_chat', 'POST', { username: currentUser, message: msg, server_id: SERVER_ID });
+    }
+
+    async function sendChatMessage(msg, isSystem = false) {
+        if (currentMode === 'single') {
+            const box = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.innerHTML = `<b>${isSystem ? 'Система' : (currentUser || 'Игрок')}</b> ${msg}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return;
+        }
+        await apiCall('/send_chat', 'POST', { 
+            username: isSystem ? 'Система' : currentUser, 
+            message: msg, 
+            server_id: SERVER_ID 
+        });
+    }
+
+    async function handleCommand(cmd) {
+        const parts = cmd.split(' ');
+        const command = parts[0].toLowerCase();
+        
+        if (command === '/mute' && parts.length >= 3) {
+            const target = parts[1];
+            const duration = parts[2];
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'mute', target, duration });
+            if (result.success) {
+                sendChatMessage('🔇 ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        if (command === '/unmute' && parts.length >= 2) {
+            const target = parts[1];
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unmute', target });
+            if (result.success) {
+                sendChatMessage('🔊 ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        if (command === '/ban' && parts.length >= 3) {
+            const target = parts[1];
+            const reason = parts.slice(2).join(' ');
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'ban', target, reason });
+            if (result.success) {
+                sendChatMessage('🔨 ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        if (command === '/tempban' && parts.length >= 4) {
+            const target = parts[1];
+            const reason = parts.slice(2, -1).join(' ');
+            const duration = parts[parts.length - 1];
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'tempban', target, reason, duration });
+            if (result.success) {
+                sendChatMessage('⏳ ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        if (command === '/unban' && parts.length >= 2) {
+            const target = parts[1];
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'unban', target });
+            if (result.success) {
+                sendChatMessage('🔓 ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        if (command === '/addadmin' && parts.length >= 3) {
+            const target = parts[1];
+            const level = parts[2];
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'addadmin', target, level });
+            if (result.success) {
+                sendChatMessage('⭐ ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        if (command === '/removeadmin' && parts.length >= 2) {
+            const target = parts[1];
+            const result = await apiCall('/admin_command', 'POST', { admin: currentUser, command: 'removeadmin', target });
+            if (result.success) {
+                sendChatMessage('⭐ ' + result.message, true);
+            } else {
+                sendChatMessage('❌ ' + result.error, true);
+            }
+            return;
+        }
+        
+        sendChatMessage('❌ Неизвестная команда. Доступно: /mute, /unmute, /ban, /tempban, /unban, /addadmin, /removeadmin', true);
     }
 
     // ========== СОХРАНЕНИЕ ==========
@@ -1060,7 +925,6 @@
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
     showMenu();
     console.log('🔰 York загружен!');
-    console.log('📖 Команды: /help');
 </script>
 </body>
 </html>
