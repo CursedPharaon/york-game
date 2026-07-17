@@ -2,526 +2,1002 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>York Hosting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>York</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{background:#0a0f0a;font-family:'Courier New',monospace;color:#eee;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
-        .container{max-width:900px;width:100%;background:#121a12;border:2px solid #2a4a2a;border-radius:16px;padding:24px 20px}
-        .logo{font-size:32px;font-weight:bold;color:#3a8a3a;letter-spacing:2px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid #1a2a1a;padding-bottom:14px}
-        .logo span{color:#5a9a5a}
-        .user-info{font-size:13px;color:#6a8a6a}
-        .user-info b{color:#8a8}
-        .tabs{display:flex;gap:8px;margin:16px 0 12px;flex-wrap:wrap}
-        .tabs button{background:#0f1a0f;border:1px solid #1a2a1a;color:#6a8a6a;padding:8px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;transition:0.2s}
-        .tabs button.active{border-color:#3a7a3a;color:#8a8;background:#1a2a1a}
-        .tabs button:hover{border-color:#2a4a2a;color:#aaa}
-        .panel{display:none;animation:fade .3s}
-        .panel.active{display:block}
-        @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-        .login-box{max-width:400px;margin:40px auto;text-align:center}
-        .login-box h2{color:#8a8;margin-bottom:16px}
-        .login-box input{width:100%;padding:12px;margin:8px 0;background:#0a0f0a;border:1px solid #1a2a1a;color:#eee;border-radius:8px;font-family:inherit;font-size:16px}
-        .login-box input:focus{border-color:#2a4a2a;outline:none}
-        .login-box button{width:100%;padding:12px;background:#2a4a2a;border:1px solid #3a5a3a;color:#eee;border-radius:8px;font-family:inherit;font-size:16px;font-weight:bold;cursor:pointer;transition:0.2s}
-        .login-box button:hover{background:#3a6a3a}
-        .login-box .error{color:#c44;margin-top:8px;font-size:14px}
-        .login-box .success{color:#4a4;margin-top:8px;font-size:14px}
-        .server-card{background:#0f1a0f;border:1px solid #1a2a1a;border-radius:12px;padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-        .server-card .name{font-size:18px;font-weight:bold;color:#8a8}
-        .server-card .status{font-size:13px;padding:4px 12px;border-radius:20px}
-        .server-card .status.online{background:#1a3a1a;color:#4a4}
-        .server-card .status.offline{background:#2a1a1a;color:#a44}
-        .server-card .actions{display:flex;gap:8px;flex-wrap:wrap}
-        .server-card .actions button{background:#1a2a1a;border:1px solid #2a3a2a;color:#aaa;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;transition:0.2s}
-        .server-card .actions button:hover{border-color:#3a5a3a;color:#eee}
-        .server-card .actions button.danger:hover{border-color:#5a2a2a;color:#c44}
-        .console-box{background:#0a0f0a;border:1px solid #1a2a1a;border-radius:8px;padding:12px;height:280px;overflow-y:auto;font-size:13px;line-height:1.6;margin:8px 0 10px;font-family:'Courier New',monospace}
-        .console-box .log-entry{border-bottom:1px solid #111f11;padding:2px 0}
-        .console-box .log-entry .time{color:#4a6a4a}
-        .console-box .log-entry .server{color:#4a8a4a}
-        .console-box .log-entry .player{color:#8a8}
-        .console-box .log-entry .system{color:#6a8a6a}
-        .console-input{display:flex;gap:8px;margin-top:6px}
-        .console-input input{flex:1;background:#0a0f0a;border:1px solid #1a2a1a;color:#eee;padding:10px 14px;border-radius:8px;font-family:inherit;font-size:14px;outline:none}
-        .console-input input:focus{border-color:#2a4a2a}
-        .console-input button{background:#1a2a1a;border:1px solid #2a3a2a;color:#eee;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:bold;transition:0.2s}
-        .console-input button:hover{border-color:#3a5a3a}
-        .tariffs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:12px 0}
-        .tariff-card{background:#0f1a0f;border:1px solid #1a2a1a;border-radius:12px;padding:18px 16px;text-align:center}
-        .tariff-card .name{font-size:18px;font-weight:bold;color:#8a8}
-        .tariff-card .details{font-size:13px;color:#6a8a6a;margin:6px 0;line-height:1.6}
-        .tariff-card .price{font-size:22px;font-weight:bold;color:#4a9a4a}
-        .tariff-card .price small{font-size:13px;color:#6a8a6a;font-weight:normal}
-        .tariff-card button{margin-top:10px;background:#2a4a2a;border:none;color:#eee;padding:8px 20px;border-radius:6px;font-family:inherit;font-weight:bold;cursor:pointer;transition:0.2s;border:1px solid #3a5a3a;width:100%}
-        .tariff-card button:hover{background:#3a6a3a}
-        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:999}
-        .modal-overlay.active{display:flex}
-        .modal{background:#121a12;border:2px solid #2a4a2a;border-radius:16px;padding:30px 24px;max-width:400px;width:100%;text-align:center}
-        .modal h2{color:#8a8;font-size:22px;margin-bottom:6px}
-        .modal .desc{color:#6a8a6a;font-size:14px;margin-bottom:18px}
-        .modal .btn-group{display:flex;flex-direction:column;gap:10px}
-        .modal .btn-group a{display:flex;align-items:center;justify-content:center;gap:10px;background:#1a2a1a;border:1px solid #2a3a2a;color:#eee;padding:12px;border-radius:8px;text-decoration:none;font-weight:bold;transition:0.2s}
-        .modal .btn-group a:hover{border-color:#3a5a3a;background:#1f2f1f}
-        .modal .btn-group .vk{border-color:#2a3a5a}
-        .modal .btn-group .vk:hover{border-color:#3a5a8a}
-        .modal .btn-group .tg{border-color:#2a5a5a}
-        .modal .btn-group .tg:hover{border-color:#3a7a7a}
-        .modal .close-btn{margin-top:14px;background:transparent;border:1px solid #2a3a2a;color:#6a8a6a;padding:8px 20px;border-radius:6px;cursor:pointer;font-family:inherit}
-        .modal .close-btn:hover{border-color:#3a4a3a}
-        .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-        .status-dot.online{background:#4a4}
-        .status-dot.offline{background:#a44}
-        .empty-state{text-align:center;color:#4a6a4a;padding:30px 0}
-        .empty-state .big{font-size:48px;margin-bottom:8px}
-        .hidden{display:none !important}
-        .balance{color:#4a9a4a;font-weight:bold}
-        .form-group{margin:10px 0}
-        .form-group label{display:block;color:#6a8a6a;font-size:14px;margin-bottom:4px}
-        .form-group input,.form-group select{width:100%;padding:10px;background:#0a0f0a;border:1px solid #1a2a1a;color:#eee;border-radius:8px;font-family:inherit}
-        .form-group input:focus,.form-group select:focus{border-color:#2a4a2a;outline:none}
-        .btn-primary{background:#2a4a2a;border:1px solid #3a5a3a;color:#eee;padding:12px 24px;border-radius:8px;font-family:inherit;font-weight:bold;cursor:pointer;transition:0.2s;width:100%}
-        .btn-primary:hover{background:#3a6a3a}
-        .copy-link{background:#1a2a1a;border:1px solid #2a3a2a;color:#6a8a6a;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;transition:0.2s}
-        .copy-link:hover{border-color:#3a5a3a;color:#aaa}
-        @media(max-width:600px){.container{padding:14px}.logo{font-size:24px}.server-card{flex-direction:column;align-items:stretch}.server-card .actions{justify-content:center}.console-input{flex-direction:column}.tariffs-grid{grid-template-columns:1fr}}
+        * { box-sizing: border-box; font-family: monospace; user-select: none; }
+        body { background: #0d0d0d; color: #eee; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #app { max-width: 700px; width: 100%; }
+        .menu-box { background: #1a1a1a; padding: 30px 20px; border-radius: 16px; text-align: center; }
+        .menu-box h1 { font-size: 48px; margin: 0; color: #8a8; }
+        .menu-box h2 { color: #aaa; font-weight: normal; margin-top: 0; }
+        .menu-btn { display: block; width: 100%; padding: 16px; margin: 10px 0; background: #2a2a2a; border: none; color: #eee; font-size: 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .menu-btn:hover { background: #3a3a3a; }
+        .menu-btn.primary { background: #4a7a4a; }
+        .menu-btn.primary:hover { background: #5a8a5a; }
+        .menu-btn.danger { background: #6a2a2a; }
+        .menu-btn.danger:hover { background: #8a3a3a; }
+        .login-box { background: #1a1a1a; padding: 20px; border-radius: 12px; }
+        .login-box input { width: 100%; padding: 12px; margin: 6px 0; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
+        .login-box button { width: 100%; padding: 12px; background: #4a7a4a; border: none; color: #fff; font-weight: bold; border-radius: 6px; margin-top: 6px; }
+        .login-box .error { color: #c44; margin-top: 8px; }
+        .top-bar { display: flex; justify-content: space-between; background: #1a1a1a; padding: 8px 12px; border-radius: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+        .res { display: flex; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+        .res span { background: #2a2a2a; padding: 4px 10px; border-radius: 16px; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+        .actions button { background: #2a2a2a; border: none; color: #eee; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+        .actions .boom { background: #6a2a2a; }
+        .actions .craft { background: #2a4a6a; }
+        #mapWrapper { position: relative; width: 100%; height: 400px; overflow: hidden; background: #1a1a1a; border-radius: 8px; touch-action: none; }
+        #map { display: grid; position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+        .cell { width: 30px; height: 30px; border: 0.5px solid #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; }
+        .grass { background: #3a5a3a; }
+        .tree { background: #2d7a2d; }
+        .stone { background: #6a6a6a; }
+        .house { background: #8a6a3a; border: 1px solid #b88a4a; }
+        .water { background: #2a4a6a; }
+        .iron { background: #8a7a6a; }
+        .gold { background: #d4a020; }
+        .chat-box { background: #1a1a1a; border-radius: 8px; padding: 6px; height: 120px; overflow-y: auto; font-size: 12px; margin: 6px 0; }
+        .chat-box div { padding: 2px 0; border-bottom: 1px solid #222; }
+        .chat-input { display: flex; gap: 6px; }
+        .chat-input input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
+        .chat-input button { padding: 8px 16px; background: #4a6a8a; border: none; color: #fff; border-radius: 6px; }
+        .hidden { display: none; }
+        .info { font-size: 12px; color: #888; padding: 4px 0; }
+        .server-list { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+        .server-item { padding: 8px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+        .server-item button { background: #4a7a4a; border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        .server-item .del-btn { background: #6a2a2a; }
+        .back-btn { background: #2a2a2a; border: none; color: #aaa; padding: 8px 16px; border-radius: 20px; margin-bottom: 10px; cursor: pointer; }
+        .add-server { display: flex; gap: 6px; margin: 10px 0; }
+        .add-server input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
+        .add-server button { background: #4a6a8a; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-inner { background: #1a1a1a; padding: 20px; border-radius: 12px; max-width: 350px; width: 100%; max-height: 80vh; overflow-y: auto; }
+        .modal-inner h3 { margin-top: 0; }
+        .modal-inner button { width: 100%; padding: 10px; margin: 6px 0; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; cursor: pointer; }
+        .modal-inner .btn-primary { background: #4a7a4a; }
+        .modal-inner .btn-danger { background: #6a2a2a; }
+        .modal-inner .btn-craft { background: #2a4a6a; }
+        .craft-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a2a; }
+        .status { font-size: 12px; }
+        .online { color: #4a4; }
+        .offline { color: #a44; }
     </style>
 </head>
 <body>
+<div id="app">
+    <!-- МЕНЮ -->
+    <div id="menuScreen" class="menu-box">
+        <h1>🔰 York</h1>
+        <h2>Выбери режим</h2>
+        <button class="menu-btn primary" onclick="showSingleplayer()">🌍 Одиночная игра</button>
+        <button class="menu-btn" onclick="showMultiplayer()">🌐 Мультиплеер</button>
+    </div>
 
-<div class="container" id="app">
-    <!-- ШАПКА -->
-    <div id="header" class="hidden">
-        <div class="logo">
-            Y<span>O</span>RK <span style="font-size:14px;color:#4a6a4a;">hosting</span>
-            <div class="user-info">
-                👤 <b id="usernameDisplay"></b>
-                <span style="margin-left:12px;">💰 <span id="balanceDisplay" class="balance">0</span> ₽</span>
-                <button onclick="logout()" style="margin-left:12px;background:#1a2a1a;border:1px solid #2a3a2a;color:#6a8a6a;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;">Выйти</button>
-            </div>
-        </div>
-        <div class="tabs">
-            <button class="active" data-tab="servers">📡 Мои сервера</button>
-            <button data-tab="create">🛒 Создать сервер</button>
-            <button data-tab="console">🖥️ Консоль</button>
+    <!-- ОДИНОЧНАЯ -->
+    <div id="singleplayerScreen" class="hidden">
+        <div class="menu-box" style="padding:15px;">
+            <button class="back-btn" onclick="showMenu()">← Назад</button>
+            <h3>🌍 Одиночный мир</h3>
+            <input id="worldName" placeholder="Название мира" style="width:100%;padding:10px;background:#2a2a2a;border:none;color:#fff;border-radius:6px;margin:6px 0;">
+            <button class="menu-btn primary" onclick="createSingleplayer()">Создать мир</button>
+            <div id="singleplayerList" class="server-list"></div>
         </div>
     </div>
 
-    <!-- СТРАНИЦА ВХОДА -->
-    <div id="loginPage">
-        <div class="login-box">
-            <h2>🔐 Вход в York Hosting</h2>
-            <input id="loginUsername" placeholder="Никнейм">
-            <input id="loginPassword" type="password" placeholder="Пароль">
-            <button onclick="login()">Войти</button>
-            <button onclick="register()" style="background:#1a2a1a;border-color:#2a3a2a;margin-top:8px;">Зарегистрироваться</button>
-            <div id="loginError" class="error"></div>
-            <div id="loginSuccess" class="success"></div>
+    <!-- МУЛЬТИПЛЕЕР -->
+    <div id="multiplayerScreen" class="hidden">
+        <div class="menu-box" style="padding:15px;">
+            <button class="back-btn" onclick="showMenu()">← Назад</button>
+            <h3>🌐 Мультиплеер</h3>
+            <div id="serverList" class="server-list"></div>
+            <div class="add-server">
+                <input id="serverUrlInput" placeholder="Ссылка на сервер">
+                <button onclick="addServer()">➕ Добавить</button>
+            </div>
+            <div id="loginBox">
+                <input id="loginUser" placeholder="Никнейм">
+                <input id="loginPass" type="password" placeholder="Пароль">
+                <button onclick="login()">Войти</button>
+                <button onclick="register()" style="background:#3a3a6a;">Регистрация</button>
+                <div id="loginError" class="error"></div>
+            </div>
         </div>
     </div>
 
-    <!-- ПАНЕЛИ -->
-    <div id="dashboard" class="hidden">
-        <div id="tab-servers" class="panel active">
-            <div id="serverList"></div>
+    <!-- ИГРА -->
+    <div id="gameScreen" class="hidden">
+        <div class="top-bar">
+            <div class="res">
+                <span>🪵 <span id="wood">0</span></span>
+                <span>🪨 <span id="stone">0</span></span>
+                <span>⛏️ <span id="iron">0</span></span>
+                <span>💥 <span id="dynamite">0</span></span>
+                <span>✨ <span id="gold">0</span></span>
+                <span>🪓 <span id="pickaxe">0</span></span>
+                <span>🪓 <span id="axe">0</span></span>
+                <span>💥⭐ <span id="upgraded_dynamite">0</span></span>
+            </div>
+            <div><span id="playerName" style="color:#8a8;"></span> <span id="serverName" style="color:#aaa;font-size:12px;"></span></div>
         </div>
-        <div id="tab-create" class="panel">
-            <h3 style="color:#8a8;margin-bottom:12px;">🛒 Выберите тариф</h3>
-            <div class="tariffs-grid">
-                <div class="tariff-card">
-                    <div class="name">🆓 Бесплатный</div>
-                    <div class="details">40x40 · 7 дней вайп<br>5 игроков · 3 дома</div>
-                    <div class="price" style="color:#6a8a6a;">0 ₽</div>
-                    <button onclick="showCreateForm('free')">Создать</button>
-                </div>
-                <div class="tariff-card">
-                    <div class="name">⭐ Стандарт</div>
-                    <div class="details">150x150 · 30 дней вайп<br>20 игроков · безлимит домов</div>
-                    <div class="price">79 ₽ <small>/мес</small></div>
-                    <button onclick="showCreateForm('standard')">Купить</button>
-                </div>
-                <div class="tariff-card">
-                    <div class="name">👑 Премиум</div>
-                    <div class="details">250x250 · без вайпа<br>50 игроков · безлимит домов<br>Приоритетная поддержка</div>
-                    <div class="price">199 ₽ <small>/мес</small></div>
-                    <button onclick="showCreateForm('premium')">Купить</button>
-                </div>
-            </div>
-            <div style="font-size:13px;color:#4a6a4a;text-align:center;">💳 Для платных тарифов — напишите в ВК или ТГ</div>
+
+        <div class="actions">
+            <button onclick="gather('tree')">🌲 Срубить</button>
+            <button onclick="gather('stone')">⛏️ Камень</button>
+            <button onclick="gather('iron')">⛏️ Руда</button>
+            <button onclick="gather('gold')">✨ Золото</button>
+            <button onclick="buildHouse()">🏠 Дом</button>
+            <button class="boom" onclick="prepareBoom()">💣 Взорвать</button>
+            <button class="craft" onclick="openCraftModal()">🔧 Крафт</button>
+            <button onclick="leaveGame()">🚪 Выйти</button>
         </div>
-        <div id="tab-console" class="panel">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <h3 style="color:#8a8;">🖥️ Консоль сервера</h3>
-                <select id="consoleServerSelect" style="background:#0a0f0a;border:1px solid #1a2a1a;color:#eee;padding:6px 12px;border-radius:6px;font-family:inherit;"></select>
-            </div>
-            <div class="console-box" id="consoleLog">
-                <div class="log-entry"><span class="time">[--:--:--]</span> <span class="system">[Система]</span> Выберите сервер</div>
-            </div>
-            <div class="console-input">
-                <input id="consoleInput" placeholder="Команда (/say текст, /kick ник)" onkeydown="if(event.key==='Enter')sendConsoleCommand()">
-                <button onclick="sendConsoleCommand()">➤ Отправить</button>
-            </div>
-            <div style="font-size:12px;color:#4a6a4a;margin-top:6px;">💡 /say [текст] — сообщение от сервера, /kick [ник] — кикнуть</div>
+
+        <div id="mapWrapper">
+            <div id="map"></div>
+        </div>
+        <div class="info" id="selectedInfo">Кликни по клетке</div>
+
+        <div class="chat-box" id="chatBox"></div>
+        <div class="chat-input">
+            <input id="chatInput" placeholder="Чат..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button onclick="sendChat()">➤</button>
         </div>
     </div>
-</div>
 
-<!-- МОДАЛКА СОЗДАНИЯ -->
-<div class="modal-overlay" id="createModal">
-    <div class="modal">
-        <h2 id="modalTitle">🏗️ Создание сервера</h2>
-        <div class="desc" id="modalDesc"></div>
-        <div class="form-group">
-            <label>Название сервера</label>
-            <input id="createServerName" placeholder="Например: York PvP">
+    <!-- МОДАЛКИ -->
+    <div id="craftModal" class="modal hidden">
+        <div class="modal-inner">
+            <h3>🔧 Крафт</h3>
+            <div id="craftList"></div>
+            <button onclick="closeModal('craftModal')">Закрыть</button>
         </div>
-        <div class="form-group">
-            <label>Ваш ник в игре (администратор)</label>
-            <input id="createAdminNick" placeholder="Ваш ник">
-        </div>
-        <button class="btn-primary" onclick="createServer()">✅ Создать сервер</button>
-        <button class="close-btn" onclick="closeModal('createModal')" style="margin-top:10px;">Закрыть</button>
-        <div id="createError" style="color:#c44;margin-top:8px;font-size:14px;"></div>
     </div>
-</div>
 
-<!-- МОДАЛКА ОПЛАТЫ -->
-<div class="modal-overlay" id="paymentModal">
-    <div class="modal">
-        <h2>💳 Оплата</h2>
-        <div class="desc" id="paymentDesc"></div>
-        <div class="btn-group">
-            <a href="https://vk.ru/kalashnikov3002" target="_blank" class="vk">✉️ Написать в ВК</a>
-            <a href="https://t.me/cursed_pharaon" target="_blank" class="tg">✉️ Написать в Telegram</a>
+    <div id="houseModal" class="modal hidden">
+        <div class="modal-inner">
+            <h3>🏠 Дом</h3>
+            <div id="houseMenu"></div>
+            <button onclick="closeModal('houseModal')">Закрыть</button>
         </div>
-        <button class="close-btn" onclick="closeModal('paymentModal')">Закрыть</button>
+    </div>
+
+    <div id="chestModal" class="modal hidden">
+        <div class="modal-inner">
+            <h3>📦 Сундук</h3>
+            <div id="chestInventory"></div>
+            <button onclick="closeModal('chestModal')">Закрыть</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // ==================== ДАННЫЕ ====================
+    // ========== ПОДКЛЮЧЕНИЕ К TURSO (ЧЕРЕЗ ПРОКСИ) ==========
+    // Используем твой бэкенд на Render как прокси к Turso
+    const API_URL = 'https://york-server.onrender.com'; // ТВОЙ СЕРВЕР НА RENDER
+
     let currentUser = null;
-    let servers = [];
-    let currentTariff = null;
+    let currentMode = null;
+    let currentWorld = null;
+    let currentServerUrl = null;
+    let resources = { wood: 0, stone: 0, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
+    let worldData = {};
+    let selectedCell = null;
+    let boomMode = false;
+    let eventSource = null;
 
-    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    function init() {
-        const users = JSON.parse(localStorage.getItem('york_hosting_users') || '{}');
-        if (!users['cursed_pharaon']) {
-            users['cursed_pharaon'] = { password: 'lokaloka1472', balance: 500 };
-            localStorage.setItem('york_hosting_users', JSON.stringify(users));
+    // ========== СПИСОК СЕРВЕРОВ ИЗ TURSO ==========
+    function getServers() {
+        return JSON.parse(localStorage.getItem('york_servers') || '[]');
+    }
+
+    function saveServers(servers) {
+        localStorage.setItem('york_servers', JSON.stringify(servers));
+    }
+
+    // Загружаем реальные сервера из Turso
+    async function loadServersFromTurso() {
+        try {
+            const resp = await fetch(API_URL + '/get_servers');
+            const data = await resp.json();
+            if (data.success) {
+                // Сохраняем в localStorage
+                const servers = data.servers.map(s => ({
+                    url: API_URL,
+                    name: s.name,
+                    id: s.id,
+                    admin: s.admin,
+                    size: s.size,
+                    wipe_days: s.wipe_days
+                }));
+                saveServers(servers);
+                renderServerList();
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки серверов из Turso:', e);
         }
-        servers = JSON.parse(localStorage.getItem('york_hosting_servers') || '[]');
+    }
+
+    function addServer() {
+        const url = document.getElementById('serverUrlInput').value.trim();
+        if (!url) { alert('Введите ссылку на сервер'); return; }
+        let servers = getServers();
+        if (servers.find(s => s.url === url)) { alert('Сервер уже добавлен'); return; }
+        servers.push({ url, name: url.replace(/^https?:\/\//, '').split('.')[0] });
+        saveServers(servers);
+        document.getElementById('serverUrlInput').value = '';
+        renderServerList();
+    }
+
+    function removeServer(url) {
+        let servers = getServers();
+        servers = servers.filter(s => s.url !== url);
+        saveServers(servers);
+        renderServerList();
+    }
+
+    function renderServerList() {
+        const list = document.getElementById('serverList');
+        const servers = getServers();
         if (servers.length === 0) {
-            servers.push({
-                id: 1,
-                name: 'York Wibe',
-                admin: 'cursed_pharaon',
-                size: 150,
-                wipe: 30,
-                tariff: 'free',
-                status: 'online',
-                owner: 'cursed_pharaon'
+            list.innerHTML = '<div style="padding:10px;color:#666;">Нет серверов. Добавь по ссылке или загрузи из Turso!</div>';
+            return;
+        }
+        list.innerHTML = servers.map(s => `
+            <div class="server-item">
+                <span>🌐 ${s.name}</span>
+                <div>
+                    <span class="status" id="status_${s.url}">⏳ проверка...</span>
+                    <button onclick="connectToServer('${s.url}')">Подключиться</button>
+                    <button class="del-btn" onclick="removeServer('${s.url}')">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+        servers.forEach(s => checkServerStatus(s.url));
+    }
+
+    async function checkServerStatus(url) {
+        const el = document.getElementById('status_' + url);
+        if (!el) return;
+        try {
+            const resp = await fetch(url + '/get_servers');
+            if (resp.ok) {
+                el.textContent = '✅ онлайн';
+                el.className = 'status online';
+            } else {
+                el.textContent = '❌ офлайн';
+                el.className = 'status offline';
+            }
+        } catch (e) {
+            el.textContent = '❌ офлайн';
+            el.className = 'status offline';
+        }
+    }
+
+    function connectToServer(url) {
+        currentServerUrl = url;
+        document.getElementById('loginBox').classList.remove('hidden');
+        const saved = JSON.parse(localStorage.getItem('york_credentials_' + url) || '{}');
+        document.getElementById('loginUser').value = saved.username || '';
+        document.getElementById('loginPass').value = saved.password || '';
+        document.getElementById('loginError').textContent = '';
+    }
+
+    // ========== ЛОГИН ==========
+    async function login() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        if (!username || !password) { showError('Заполните все поля'); return; }
+        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
+        
+        localStorage.setItem('york_credentials_' + currentServerUrl, JSON.stringify({ username, password }));
+        
+        try {
+            const resp = await fetch(currentServerUrl + '/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
-            localStorage.setItem('york_hosting_servers', JSON.stringify(servers));
-        }
-        const savedUser = localStorage.getItem('york_hosting_current_user');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            showDashboard();
+            const result = await resp.json();
+            if (result.success) {
+                currentUser = username;
+                currentMode = 'multi';
+                await loadGame();
+                enterGame('Мультиплеер');
+                startChatStream();
+            } else {
+                showError(result.error || 'Ошибка входа');
+            }
+        } catch (e) {
+            showError('Сервер недоступен');
         }
     }
 
-    // ==================== ВХОД ====================
-    function login() {
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
-        if (!username || !password) {
-            showLoginError('Заполните все поля');
-            return;
+    async function register() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        if (!username || !password) { showError('Заполните все поля'); return; }
+        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
+        try {
+            const resp = await fetch(currentServerUrl + '/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const result = await resp.json();
+            if (result.success) {
+                showError('✅ Зарегистрирован! Теперь войдите.');
+            } else {
+                showError(result.error || 'Ошибка регистрации');
+            }
+        } catch (e) {
+            showError('Сервер недоступен');
         }
-        const users = JSON.parse(localStorage.getItem('york_hosting_users') || '{}');
-        const user = users[username];
-        if (!user || user.password !== password) {
-            showLoginError('Неверный логин или пароль');
-            return;
-        }
-        currentUser = { username, balance: user.balance || 0 };
-        localStorage.setItem('york_hosting_current_user', JSON.stringify(currentUser));
-        showDashboard();
     }
 
-    function register() {
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
-        if (!username || !password) {
-            showLoginError('Заполните все поля');
-            return;
-        }
-        const users = JSON.parse(localStorage.getItem('york_hosting_users') || '{}');
-        if (users[username]) {
-            showLoginError('Пользователь уже существует');
-            return;
-        }
-        users[username] = { password, balance: 0 };
-        localStorage.setItem('york_hosting_users', JSON.stringify(users));
-        showLoginError('✅ Регистрация успешна! Теперь войдите.', 'green');
-    }
-
-    function showLoginError(msg, color = '#c44') {
+    function showError(msg) {
         const el = document.getElementById('loginError');
         el.textContent = msg;
-        el.style.color = color;
-        if (color === 'green') {
-            document.getElementById('loginSuccess').textContent = msg;
-            document.getElementById('loginSuccess').style.color = '#4a4';
-        } else {
-            document.getElementById('loginSuccess').textContent = '';
-        }
-        setTimeout(() => { el.textContent = ''; document.getElementById('loginSuccess').textContent = ''; }, 4000);
+        setTimeout(() => el.textContent = '', 4000);
     }
 
-    function logout() {
-        currentUser = null;
-        localStorage.removeItem('york_hosting_current_user');
-        document.getElementById('loginPage').classList.remove('hidden');
-        document.getElementById('dashboard').classList.add('hidden');
-        document.getElementById('header').classList.add('hidden');
-    }
-
-    // ==================== ДАШБОРД ====================
-    function showDashboard() {
-        document.getElementById('loginPage').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        document.getElementById('header').classList.remove('hidden');
-        document.getElementById('usernameDisplay').textContent = currentUser.username;
-        updateBalance();
-        renderServers();
-        updateConsoleSelect();
-        setupTabs();
-    }
-
-    function updateBalance() {
-        const users = JSON.parse(localStorage.getItem('york_hosting_users') || '{}');
-        if (users[currentUser.username]) {
-            currentUser.balance = users[currentUser.username].balance || 0;
-            document.getElementById('balanceDisplay').textContent = currentUser.balance;
+    // ========== API ==========
+    async function apiCall(endpoint, method = 'POST', data = null) {
+        if (!currentServerUrl) { return { success: false, error: 'Сервер не выбран' }; }
+        try {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (data) options.body = JSON.stringify(data);
+            const resp = await fetch(currentServerUrl + endpoint, options);
+            return await resp.json();
+        } catch (e) {
+            console.error('API ошибка:', e);
+            return { success: false, error: 'Сервер недоступен' };
         }
     }
 
-    function setupTabs() {
-        document.querySelectorAll('.tabs button').forEach(btn => {
-            btn.removeEventListener('click', tabHandler);
-            btn.addEventListener('click', tabHandler);
-        });
-    }
-
-    function tabHandler() {
-        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        const tab = this.dataset.tab;
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active');
-        if (tab === 'console') loadConsole();
-    }
-
-    // ==================== СЕРВЕРА ====================
-    function renderServers() {
-        const list = document.getElementById('serverList');
-        const userServers = servers.filter(s => s.owner === currentUser.username);
-        if (userServers.length === 0) {
-            list.innerHTML = `
-                <div class="empty-state">
-                    <div class="big">🏗️</div>
-                    <div>У вас пока нет серверов</div>
-                    <div style="font-size:13px;color:#4a6a4a;">Перейдите во вкладку «Создать сервер»</div>
-                </div>
-            `;
-            return;
+    // ========== ЧАТ В РЕАЛЬНОМ ВРЕМЕНИ ==========
+    function startChatStream() {
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        if (!currentServerUrl) return;
+        try {
+            eventSource = new EventSource(currentServerUrl + '/stream_chat');
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const box = document.getElementById('chatBox');
+                const div = document.createElement('div');
+                div.innerHTML = `<b>${data.user}</b> ${data.msg} <span style="color:#666;font-size:10px;">${data.time || ''}</span>`;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            };
+            eventSource.onerror = function() {
+                setTimeout(startChatStream, 3000);
+            };
+        } catch (e) {
+            console.error('SSE ошибка:', e);
         }
-        list.innerHTML = userServers.map(s => `
-            <div class="server-card">
+    }
+
+    // ========== ОДИНОЧНАЯ ИГРА ==========
+    function loadSingleplayerList() {
+        const list = document.getElementById('singleplayerList');
+        const worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
+        list.innerHTML = worlds.length ? worlds.map(w => `
+            <div class="server-item">
+                <span>🌍 ${w}</span>
                 <div>
-                    <div class="name">🌐 ${s.name}</div>
-                    <div style="font-size:13px;color:#6a8a6a;">admin: ${s.admin} · ${s.size}x${s.size} · вайп ${s.wipe}д · ${s.tariff}</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                    <span class="status ${s.status}"><span class="status-dot ${s.status}"></span>${s.status === 'online' ? 'Онлайн' : 'Офлайн'}</span>
-                    <div class="actions">
-                        <button onclick="copyLink(${s.id})" style="background:#1a2a1a;border-color:#2a3a2a;color:#6a8a6a;" title="Скопировать ссылку на сервер">🔗</button>
-                        <button onclick="toggleServer(${s.id})">${s.status === 'online' ? '⏸️ Выключить' : '▶️ Включить'}</button>
-                        <button onclick="openConsoleTab(${s.id})">🖥️</button>
-                        <button class="danger" onclick="deleteServer(${s.id})">🗑️</button>
-                    </div>
+                    <button onclick="loadSingleplayer('${w}')">Играть</button>
+                    <button class="del-btn" onclick="deleteSingleplayer('${w}')">🗑️</button>
                 </div>
             </div>
-        `).join('');
+        `).join('') : '<div style="padding:10px;color:#666;">Нет миров. Создай новый!</div>';
     }
 
-    function copyLink(id) {
-        const link = `https://york-game.onrender.com/play?server=${id}`;
-        navigator.clipboard.writeText(link).then(() => {
-            alert(`✅ Ссылка скопирована!\n${link}`);
-        }).catch(() => {
-            prompt('Скопируйте ссылку вручную:', link);
+    function createSingleplayer() {
+        const name = document.getElementById('worldName').value.trim();
+        if (!name) { alert('Введите название мира'); return; }
+        let worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
+        if (worlds.includes(name)) { alert('Мир уже существует'); return; }
+        worlds.push(name);
+        localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
+        const world = generateWorld(150);
+        localStorage.setItem('york_singleplayer_' + name, JSON.stringify({ world, resources: { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 } }));
+        document.getElementById('worldName').value = '';
+        loadSingleplayerList();
+        loadSingleplayer(name);
+    }
+
+    function deleteSingleplayer(name) {
+        if (!confirm(`Удалить мир "${name}"?`)) return;
+        let worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
+        worlds = worlds.filter(w => w !== name);
+        localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
+        localStorage.removeItem('york_singleplayer_' + name);
+        loadSingleplayerList();
+    }
+
+    function loadSingleplayer(name) {
+        currentMode = 'single';
+        currentWorld = name;
+        currentServerUrl = null;
+        const data = JSON.parse(localStorage.getItem('york_singleplayer_' + name) || 'null');
+        if (data) {
+            worldData = data.world;
+            resources = data.resources || { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
+        } else {
+            worldData = generateWorld(150);
+            resources = { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
+        }
+        currentUser = 'Игрок';
+        enterGame('Одиночный мир: ' + name);
+    }
+
+    function saveSingleplayer() {
+        if (currentMode === 'single' && currentWorld) {
+            const data = { world: worldData, resources: resources };
+            localStorage.setItem('york_singleplayer_' + currentWorld, JSON.stringify(data));
+        }
+    }
+
+    // ========== ГЕНЕРАЦИЯ МИРА ==========
+    function generateWorld(size) {
+        const world = {};
+        for (let x = 0; x < size; x++) {
+            for (let y = 0; y < size; y++) {
+                const r = Math.random();
+                let type = 'grass';
+                if (r < 0.15) type = 'water';
+                else if (r < 0.30) type = 'stone';
+                else if (r < 0.50) type = 'tree';
+                else if (r < 0.55) type = 'iron';
+                else if (r < 0.58) type = 'gold';
+                else type = 'grass';
+                world[x+','+y] = { type, owner: null, house_level: 0 };
+            }
+        }
+        return world;
+    }
+
+    // ========== НАВИГАЦИЯ ==========
+    function showMenu() { hideAll(); document.getElementById('menuScreen').classList.remove('hidden'); }
+    function showSingleplayer() { hideAll(); document.getElementById('singleplayerScreen').classList.remove('hidden'); loadSingleplayerList(); }
+    function showMultiplayer() { hideAll(); document.getElementById('multiplayerScreen').classList.remove('hidden'); renderServerList(); document.getElementById('loginBox').classList.remove('hidden'); loadServersFromTurso(); }
+    function hideAll() {
+        ['menuScreen', 'singleplayerScreen', 'multiplayerScreen', 'gameScreen'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
         });
     }
 
-    function toggleServer(id) {
-        const server = servers.find(s => s.id === id && s.owner === currentUser.username);
-        if (!server) return;
-        server.status = server.status === 'online' ? 'offline' : 'online';
-        localStorage.setItem('york_hosting_servers', JSON.stringify(servers));
-        renderServers();
-        addConsoleLog(server.id, 'Система', `Сервер ${server.status === 'online' ? 'включён' : 'выключен'}`);
+    // ========== ВХОД В ИГРУ ==========
+    function enterGame(serverName) {
+        hideAll();
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('playerName').textContent = currentUser || 'Игрок';
+        document.getElementById('serverName').textContent = serverName;
+        updateUI();
+        renderMap();
+        if (currentMode === 'multi') { startChatStream(); }
+        setupDrag();
     }
 
-    function deleteServer(id) {
-        if (!confirm('Удалить сервер? Все данные будут потеряны.')) return;
-        servers = servers.filter(s => !(s.id === id && s.owner === currentUser.username));
-        localStorage.setItem('york_hosting_servers', JSON.stringify(servers));
-        renderServers();
-        updateConsoleSelect();
+    function leaveGame() {
+        if (currentMode === 'single') saveSingleplayer();
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        showMenu();
     }
 
-    function openConsoleTab(id) {
-        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-        document.querySelector('[data-tab="console"]').classList.add('active');
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        document.getElementById('tab-console').classList.add('active');
-        document.getElementById('consoleServerSelect').value = id;
-        loadConsole();
+    // ========== КАРТА ==========
+    function renderMap() {
+        const map = document.getElementById('map');
+        const cellSize = 30 * (window._scale || 1);
+        map.style.gridTemplateColumns = `repeat(${150}, ${cellSize}px)`;
+        map.innerHTML = '';
+        for (let y = 0; y < 30; y++) {
+            for (let x = 0; x < 30; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                const key = x + ',' + y;
+                const data = worldData[key] || { type: 'grass', owner: null, house_level: 0 };
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                cell.classList.add(data.type);
+                if (data.owner) {
+                    const level = data.house_level || 1;
+                    cell.textContent = '🏠' + level;
+                }
+                cell.style.width = cellSize + 'px';
+                cell.style.height = cellSize + 'px';
+                cell.style.fontSize = (cellSize * 0.5) + 'px';
+                cell.onclick = () => onCellClick(x, y);
+                map.appendChild(cell);
+            }
+        }
+        if (window._offsetX === undefined) window._offsetX = 0;
+        if (window._offsetY === undefined) window._offsetY = 0;
+        map.style.transform = `translate(${window._offsetX}px, ${window._offsetY}px)`;
     }
 
-    // ==================== КОНСОЛЬ ====================
-    function updateConsoleSelect() {
-        const select = document.getElementById('consoleServerSelect');
-        const userServers = servers.filter(s => s.owner === currentUser.username);
-        select.innerHTML = userServers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        if (userServers.length > 0) {
-            select.value = userServers[0].id;
-            loadConsole();
-        } else {
-            document.getElementById('consoleLog').innerHTML = '<div class="log-entry"><span class="system">[Система]</span> Нет серверов</div>';
+    function onCellClick(x, y) {
+        const key = x + ',' + y;
+        const data = worldData[key] || { type: 'grass', owner: null, house_level: 0 };
+        document.getElementById('selectedInfo').textContent = `[${x},${y}] ${data.type}${data.owner ? ' 🏠'+data.owner+' (lv'+data.house_level+')' : ''}`;
+        selectedCell = { x, y };
+        
+        if (boomMode) { boomMode = false; doBoom(x, y); return; }
+        
+        if (data.type === 'house' && data.owner === currentUser) {
+            openHouseMenu(x, y, data.house_level || 1);
         }
     }
 
-    function loadConsole() {
-        const select = document.getElementById('consoleServerSelect');
-        const serverId = parseInt(select.value);
-        if (!serverId) return;
-        const logs = JSON.parse(localStorage.getItem('york_console_logs_' + serverId) || '[]');
-        const logBox = document.getElementById('consoleLog');
-        if (logs.length === 0) {
-            logBox.innerHTML = `<div class="log-entry"><span class="time">[--:--:--]</span> <span class="system">[Система]</span> Консоль готова</div>`;
-            return;
-        }
-        logBox.innerHTML = logs.map(log => `
-            <div class="log-entry">
-                <span class="time">[${log.time}]</span>
-                <span class="${log.type === 'Сервер' ? 'server' : log.type === 'Система' ? 'system' : 'player'}">[${log.type}]</span> ${log.message}
-            </div>
-        `).join('');
-        logBox.scrollTop = logBox.scrollHeight;
+    // ========== ПЕРЕТАСКИВАНИЕ И ЗУМ ==========
+    let startX, startY, startOffX, startOffY;
+
+    function setupDrag() {
+        const wrapper = document.getElementById('mapWrapper');
+        wrapper.removeEventListener('touchstart', onTouchStart);
+        wrapper.removeEventListener('touchmove', onTouchMove);
+        wrapper.addEventListener('touchstart', onTouchStart);
+        wrapper.addEventListener('touchmove', onTouchMove);
+        wrapper.addEventListener('wheel', onWheel);
     }
 
-    function addConsoleLog(serverId, type, message) {
-        const logs = JSON.parse(localStorage.getItem('york_console_logs_' + serverId) || '[]');
-        const time = new Date().toLocaleTimeString();
-        logs.push({ time, type, message });
-        if (logs.length > 100) logs.shift();
-        localStorage.setItem('york_console_logs_' + serverId, JSON.stringify(logs));
-        const select = document.getElementById('consoleServerSelect');
-        if (parseInt(select.value) === serverId) loadConsole();
-    }
-
-    function sendConsoleCommand() {
-        const input = document.getElementById('consoleInput');
-        const cmd = input.value.trim();
-        if (!cmd) return;
-        input.value = '';
-        const select = document.getElementById('consoleServerSelect');
-        const serverId = parseInt(select.value);
-        if (!serverId) return;
-        addConsoleLog(serverId, 'Система', `Выполнена команда: ${cmd}`);
-        if (cmd.startsWith('/say ')) {
-            const msg = cmd.replace('/say ', '');
-            addConsoleLog(serverId, 'Сервер', `[Сообщение сервера] ${msg}`);
-        } else if (cmd.startsWith('/kick ')) {
-            const nick = cmd.replace('/kick ', '');
-            addConsoleLog(serverId, 'Сервер', `Игрок ${nick} был кикнут`);
-        } else {
-            addConsoleLog(serverId, 'Сервер', `Команда выполнена: ${cmd}`);
+    function onTouchStart(e) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startOffX = window._offsetX || 0;
+        startOffY = window._offsetY || 0;
+        if (e.touches.length === 2) {
+            const t1 = e.touches[0], t2 = e.touches[1];
+            window._dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            window._scale = window._scale || 1;
         }
     }
 
-    // ==================== СОЗДАНИЕ СЕРВЕРА ====================
-    function showCreateForm(tariff) {
-        currentTariff = tariff;
-        const names = { free: 'Бесплатный', standard: 'Стандарт', premium: 'Премиум' };
-        const prices = { free: '0 ₽', standard: '79 ₽/мес', premium: '199 ₽/мес' };
-        document.getElementById('modalTitle').textContent = '🏗️ Создание сервера';
-        document.getElementById('modalDesc').textContent = `Вы выбрали тариф «${names[tariff]}» на ${prices[tariff]}`;
-        document.getElementById('createError').textContent = '';
-        document.getElementById('createModal').classList.add('active');
-        if (tariff !== 'free') {
-            document.getElementById('createModal').classList.remove('active');
-            document.getElementById('paymentDesc').textContent = `Вы выбрали тариф «${names[tariff]}» на ${prices[tariff]}`;
-            document.getElementById('paymentModal').classList.add('active');
+    function onTouchMove(e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+            window._offsetX = startOffX + dx;
+            window._offsetY = startOffY + dy;
+            document.getElementById('map').style.transform = `translate(${window._offsetX}px, ${window._offsetY}px)`;
+        } else if (e.touches.length === 2) {
+            const t1 = e.touches[0], t2 = e.touches[1];
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const oldDist = window._dist || dist;
+            const oldScale = window._scale || 1;
+            let newScale = oldScale * (dist / oldDist);
+            newScale = Math.min(2, Math.max(0.5, newScale));
+            window._scale = newScale;
+            window._dist = dist;
+            renderMap();
         }
     }
 
-    function createServer() {
-        const name = document.getElementById('createServerName').value.trim();
-        const admin = document.getElementById('createAdminNick').value.trim();
-        if (!name || !admin) {
-            document.getElementById('createError').textContent = 'Заполните все поля';
-            return;
+    function onWheel(e) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        window._scale = Math.min(2, Math.max(0.5, (window._scale || 1) + delta));
+        renderMap();
+    }
+
+    // ========== ДЕЙСТВИЯ ==========
+    async function gather(type) {
+        if (!selectedCell) { alert('Сначала выбери клетку'); return; }
+        const { x, y } = selectedCell;
+        const key = x + ',' + y;
+        const data = worldData[key];
+        if (!data || data.type !== type) { 
+            alert('Здесь нет ' + (type === 'tree' ? 'дерева' : type === 'stone' ? 'камня' : type === 'iron' ? 'руды' : 'золота')); 
+            return; 
         }
-        const configs = {
-            free: { size: 40, wipe: 7, price: 0 },
-            standard: { size: 150, wipe: 30, price: 79 },
-            premium: { size: 250, wipe: 0, price: 199 }
-        };
-        const config = configs[currentTariff];
-        if (currentTariff !== 'free') {
-            const users = JSON.parse(localStorage.getItem('york_hosting_users') || '{}');
-            if ((users[currentUser.username]?.balance || 0) < config.price) {
-                document.getElementById('createError').textContent = `Недостаточно средств. Нужно ${config.price} ₽`;
+        if (data.owner) { alert('Это занято'); return; }
+        
+        let amount = 1;
+        if (type === 'tree' && resources.axe > 0) amount = 1 + resources.axe * 0.5;
+        else if ((type === 'stone' || type === 'iron') && resources.pickaxe > 0) amount = 1 + resources.pickaxe * 0.5;
+        else if (type === 'tree') amount = 2;
+        else if (type === 'stone') amount = 2;
+        else if (type === 'iron') amount = 1;
+        else if (type === 'gold') amount = 0.5;
+        
+        const resKey = type === 'tree' ? 'wood' : type === 'stone' ? 'stone' : type === 'iron' ? 'iron' : 'gold';
+        resources[resKey] += amount;
+        data.type = 'grass';
+        data.owner = null;
+        await saveAll();
+        updateUI();
+        renderMap();
+    }
+
+    async function buildHouse() {
+        if (!selectedCell) { alert('Выбери клетку'); return; }
+        const { x, y } = selectedCell;
+        const key = x + ',' + y;
+        const data = worldData[key];
+        if (!data || data.type !== 'grass') { alert('Только на траве'); return; }
+        if (data.owner) { alert('Уже занято'); return; }
+        if (resources.wood < 5 || resources.stone < 3) { alert('Нужно 5 дерева и 3 камня'); return; }
+        resources.wood -= 5; resources.stone -= 3;
+        data.type = 'house'; data.owner = currentUser; data.house_level = 1;
+        await saveAll();
+        updateUI();
+        renderMap();
+        sendChatMessage('🏠 ' + currentUser + ' построил дом!', true);
+    }
+
+    function prepareBoom() {
+        if (resources.upgraded_dynamite > 0) {
+            if (confirm('Использовать улучшенный динамит (взрыв 5x5)?')) {
+                boomMode = true;
+                boomType = 'upgraded';
+                alert('💣 Выбери клетку для мощного взрыва');
                 return;
             }
-            users[currentUser.username].balance -= config.price;
-            localStorage.setItem('york_hosting_users', JSON.stringify(users));
-            currentUser.balance = users[currentUser.username].balance;
-            document.getElementById('balanceDisplay').textContent = currentUser.balance;
         }
-        const newServer = {
-            id: Date.now(),
-            name: name,
-            admin: admin,
-            size: config.size,
-            wipe: config.wipe,
-            tariff: currentTariff,
-            status: 'online',
-            owner: currentUser.username
+        if (resources.dynamite < 1) { alert('Нет динамита! Скрафти его.'); return; }
+        boomMode = true;
+        boomType = 'normal';
+        alert('💣 Выбери клетку для взрыва');
+    }
+
+    let boomType = 'normal';
+
+    async function doBoom(x, y) {
+        let radius = 1;
+        if (boomType === 'upgraded') {
+            radius = 2;
+            if (resources.upgraded_dynamite < 1) return;
+            resources.upgraded_dynamite -= 1;
+        } else {
+            if (resources.dynamite < 1) return;
+            resources.dynamite -= 1;
+        }
+        
+        for (let dx = -radius; dx <= radius; dx++) {
+            for (let dy = -radius; dy <= radius; dy++) {
+                const k = (x+dx) + ',' + (y+dy);
+                if (worldData[k]) {
+                    worldData[k] = { type: 'grass', owner: null, house_level: 0 };
+                }
+            }
+        }
+        
+        await saveAll();
+        updateUI();
+        renderMap();
+        sendChatMessage('💥 ' + currentUser + ' взорвал бомбу!', true);
+        boomMode = false;
+    }
+
+    // ========== КРАФТЫ ==========
+    function openCraftModal() {
+        const modal = document.getElementById('craftModal');
+        modal.classList.remove('hidden');
+        const list = document.getElementById('craftList');
+        const crafts = [
+            { name: 'Динамит', cost: '5 камня + 3 железа + 1 золото', res: { stone: 5, iron: 3, gold: 1 }, result: { dynamite: 1 } },
+            { name: 'Улучшенный динамит', cost: '10 камня + 5 железа + 3 золота', res: { stone: 10, iron: 5, gold: 3 }, result: { upgraded_dynamite: 1 } },
+            { name: 'Кирка', cost: '3 дерева + 2 железа', res: { wood: 3, iron: 2 }, result: { pickaxe: 1 } },
+            { name: 'Топор', cost: '3 дерева + 2 камня', res: { wood: 3, stone: 2 }, result: { axe: 1 } }
+        ];
+        list.innerHTML = crafts.map(c => `
+            <div class="craft-item">
+                <span><b>${c.name}</b> (${c.cost})</span>
+                <button onclick="craftItem('${c.name}')" class="btn-craft">Скрафтить</button>
+            </div>
+        `).join('');
+    }
+
+    async function craftItem(name) {
+        const crafts = {
+            'Динамит': { res: { stone: 5, iron: 3, gold: 1 }, result: { dynamite: 1 } },
+            'Улучшенный динамит': { res: { stone: 10, iron: 5, gold: 3 }, result: { upgraded_dynamite: 1 } },
+            'Кирка': { res: { wood: 3, iron: 2 }, result: { pickaxe: 1 } },
+            'Топор': { res: { wood: 3, stone: 2 }, result: { axe: 1 } }
         };
-        servers.push(newServer);
-        localStorage.setItem('york_hosting_servers', JSON.stringify(servers));
-        closeModal('createModal');
-        renderServers();
-        updateConsoleSelect();
-        addConsoleLog(newServer.id, 'Система', `Сервер ${name} создан!`);
-        alert(`✅ Сервер «${name}» создан!\nРазмер: ${config.size}x${config.size}\nВайп: ${config.wipe === 0 ? 'без вайпа' : config.wipe + ' дней'}\n🔗 Ссылка: https://york-game.onrender.com/play?server=${newServer.id}`);
+        const craft = crafts[name];
+        if (!craft) return;
+        
+        for (const [res, amount] of Object.entries(craft.res)) {
+            if (resources[res] < amount) {
+                alert(`Не хватает ${res}! Нужно ${amount}`);
+                return;
+            }
+        }
+        
+        for (const [res, amount] of Object.entries(craft.res)) {
+            resources[res] -= amount;
+        }
+        for (const [res, amount] of Object.entries(craft.result)) {
+            resources[res] += amount;
+        }
+        
+        await saveAll();
+        updateUI();
+        sendChatMessage('🔧 ' + currentUser + ' скрафтил ' + name + '!', true);
+        closeModal('craftModal');
     }
 
-    // ==================== МОДАЛКИ ====================
+    // ========== ДОМА ==========
+    async function openHouseMenu(x, y, level) {
+        const modal = document.getElementById('houseModal');
+        modal.classList.remove('hidden');
+        const menu = document.getElementById('houseMenu');
+        const maxLevel = 5;
+        const upgradeCosts = {
+            1: { wood: 10, stone: 5, iron: 2 },
+            2: { wood: 20, stone: 10, iron: 5 },
+            3: { wood: 40, stone: 20, iron: 10 },
+            4: { wood: 80, stone: 40, iron: 20 }
+        };
+        const cost = upgradeCosts[level];
+        const canUpgrade = level < maxLevel && cost && 
+            resources.wood >= cost.wood && resources.stone >= cost.stone && resources.iron >= cost.iron;
+        
+        menu.innerHTML = `
+            <p>Уровень дома: ${level} / ${maxLevel}</p>
+            <p>Слотов в сундуке: ${level * 5}</p>
+            ${level < maxLevel ? `
+                <p>Улучшение: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️</p>
+                <button class="btn-primary" onclick="upgradeHouse(${x},${y},${level})" ${!canUpgrade ? 'disabled style="opacity:0.4;"' : ''}>
+                    ${canUpgrade ? '🔨 Улучшить' : '❌ Не хватает ресурсов'}
+                </button>
+            ` : '<p>✅ Дом максимального уровня!</p>'}
+            <button onclick="openChest(${x},${y})">📦 Открыть сундук</button>
+        `;
+    }
+
+    async function upgradeHouse(x, y, currentLevel) {
+        if (currentMode === 'single') {
+            const key = x + ',' + y;
+            if (worldData[key]) {
+                worldData[key].house_level = (worldData[key].house_level || 1) + 1;
+                await saveAll();
+                renderMap();
+                sendChatMessage('🏠 ' + currentUser + ' улучшил дом до уровня ' + worldData[key].house_level + '!', true);
+                closeModal('houseModal');
+                updateUI();
+            }
+            return;
+        }
+        const result = await apiCall('/upgrade_house', 'POST', { x, y, owner: currentUser });
+        if (result.success) {
+            const key = x + ',' + y;
+            worldData[key].house_level = result.new_level;
+            await saveAll();
+            renderMap();
+            sendChatMessage('🏠 ' + currentUser + ' улучшил дом до уровня ' + result.new_level + '!', true);
+            closeModal('houseModal');
+            updateUI();
+        } else {
+            alert(result.error || 'Ошибка улучшения');
+        }
+    }
+
+    async function openChest(x, y) {
+        const modal = document.getElementById('chestModal');
+        modal.classList.remove('hidden');
+        const key = x + ',' + y;
+        const data = worldData[key];
+        if (!data || data.owner !== currentUser) { alert('Это не твой дом!'); return; }
+        
+        const level = data.house_level || 1;
+        const slots = level * 5;
+        
+        const container = document.getElementById('chestInventory');
+        container.innerHTML = `
+            <p>📦 Сундук (${slots} слотов)</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;">
+                ${Array.from({length: slots}, (_, i) => `
+                    <div style="background:#2a2a2a;padding:8px;border-radius:4px;min-width:30px;text-align:center;color:#666;">пусто</div>
+                `).join('')}
+            </div>
+            <p style="font-size:12px;color:#888;">🔧 Команды для сундука в разработке...</p>
+        `;
+    }
+
+    // ========== КОМАНДЫ ЧЕРЕЗ ЧАТ ==========
+    async function sendChat() {
+        const input = document.getElementById('chatInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+        
+        if (msg.startsWith('/')) {
+            await handleCommand(msg);
+            return;
+        }
+        
+        if (currentMode === 'single') {
+            const box = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.innerHTML = `<b>${currentUser || 'Игрок'}</b> ${msg}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return;
+        }
+        await apiCall('/send_chat', 'POST', { username: currentUser, message: msg });
+    }
+
+    async function sendChatMessage(msg, isSystem = false) {
+        if (currentMode === 'single') {
+            const box = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.innerHTML = `<b>${isSystem ? 'Система' : (currentUser || 'Игрок')}</b> ${msg}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            return;
+        }
+        await apiCall('/send_chat', 'POST', { 
+            username: isSystem ? 'Система' : currentUser, 
+            message: msg
+        });
+    }
+
+    async function handleCommand(cmd) {
+        const parts = cmd.split(' ');
+        const command = parts[0].toLowerCase();
+        
+        if (command === '/house' && parts.length >= 2) {
+            const action = parts[1];
+            if (action === 'upgrade') {
+                if (!selectedCell) { sendChatMessage('❌ Сначала выбери дом', true); return; }
+                const { x, y } = selectedCell;
+                const key = x + ',' + y;
+                const data = worldData[key];
+                if (!data || data.type !== 'house' || data.owner !== currentUser) {
+                    sendChatMessage('❌ Это не твой дом', true);
+                    return;
+                }
+                const level = data.house_level || 1;
+                if (level >= 5) {
+                    sendChatMessage('✅ Дом уже максимального уровня', true);
+                    return;
+                }
+                const costs = {
+                    1: { wood: 10, stone: 5, iron: 2 },
+                    2: { wood: 20, stone: 10, iron: 5 },
+                    3: { wood: 40, stone: 20, iron: 10 },
+                    4: { wood: 80, stone: 40, iron: 20 }
+                };
+                const cost = costs[level];
+                if (!cost) return;
+                if (resources.wood < cost.wood || resources.stone < cost.stone || resources.iron < cost.iron) {
+                    sendChatMessage(`❌ Не хватает! Нужно: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️`, true);
+                    return;
+                }
+                resources.wood -= cost.wood;
+                resources.stone -= cost.stone;
+                resources.iron -= cost.iron;
+                data.house_level = level + 1;
+                await saveAll();
+                updateUI();
+                renderMap();
+                sendChatMessage(`🏠 Дом улучшен до уровня ${data.house_level}!`, true);
+                return;
+            }
+            if (action === 'chest') {
+                if (!selectedCell) { sendChatMessage('❌ Сначала выбери дом', true); return; }
+                const { x, y } = selectedCell;
+                const key = x + ',' + y;
+                const data = worldData[key];
+                if (!data || data.type !== 'house' || data.owner !== currentUser) {
+                    sendChatMessage('❌ Это не твой дом', true);
+                    return;
+                }
+                await openChest(x, y);
+                return;
+            }
+            if (action === 'add' && parts.length >= 3) {
+                const nick = parts[2];
+                if (currentMode === 'single') {
+                    sendChatMessage(`✅ Игрок ${nick} добавлен в дом (одиночный режим)`, true);
+                    return;
+                }
+                const result = await apiCall('/house_add', 'POST', { 
+                    x: selectedCell?.x, 
+                    y: selectedCell?.y, 
+                    owner: currentUser, 
+                    target: nick 
+                });
+                if (result.success) {
+                    sendChatMessage(`✅ Игрок ${nick} добавлен в дом`, true);
+                } else {
+                    sendChatMessage(`❌ ${result.error}`, true);
+                }
+                return;
+            }
+            if (action === 'remove' && parts.length >= 3) {
+                const nick = parts[2];
+                if (currentMode === 'single') {
+                    sendChatMessage(`✅ Игрок ${nick} удалён из дома (одиночный режим)`, true);
+                    return;
+                }
+                const result = await apiCall('/house_remove', 'POST', { 
+                    x: selectedCell?.x, 
+                    y: selectedCell?.y, 
+                    owner: currentUser, 
+                    target: nick 
+                });
+                if (result.success) {
+                    sendChatMessage(`✅ Игрок ${nick} удалён из дома`, true);
+                } else {
+                    sendChatMessage(`❌ ${result.error}`, true);
+                }
+                return;
+            }
+            if (action === 'list') {
+                if (currentMode === 'single') {
+                    sendChatMessage('🏠 Владелец: ' + currentUser, true);
+                    return;
+                }
+                const result = await apiCall('/house_list', 'POST', { x: selectedCell?.x, y: selectedCell?.y });
+                if (result.success) {
+                    sendChatMessage(`🏠 Члены дома: ${result.members.join(', ') || 'никого'}`, true);
+                } else {
+                    sendChatMessage(`❌ ${result.error}`, true);
+                }
+                return;
+            }
+        }
+        
+        sendChatMessage('❌ Неизвестная команда. Доступно: /house upgrade, /house chest, /house add [ник], /house remove [ник], /house list', true);
+    }
+
+    // ========== МОДАЛКИ ==========
     function closeModal(id) {
-        document.getElementById(id).classList.remove('active');
+        document.getElementById(id).classList.add('hidden');
     }
 
-    // ==================== ЗАПУСК ====================
-    init();
-    console.log('🏗️ York Hosting загружен!');
+    // ========== СОХРАНЕНИЕ ==========
+    async function loadGame() {
+        if (currentMode === 'multi' && currentServerUrl) {
+            const resData = await apiCall('/get_resources', 'POST', { username: currentUser });
+            resources = { 
+                wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, 
+                dynamite: resData.dynamite || 0, gold: resData.gold || 0,
+                pickaxe: resData.pickaxe || 0, axe: resData.axe || 0,
+                upgraded_dynamite: resData.upgraded_dynamite || 0
+            };
+            const world = await apiCall('/get_world', 'POST', { server_id: 1 });
+            worldData = world;
+        }
+    }
+
+    async function saveAll() {
+        if (currentMode === 'single') {
+            saveSingleplayer();
+        } else if (currentMode === 'multi' && currentServerUrl) {
+            await apiCall('/save_resources', 'POST', { username: currentUser, ...resources });
+            await apiCall('/save_world', 'POST', { server_id: 1, cells: worldData });
+        }
+    }
+
+    // ========== UI ==========
+    function updateUI() {
+        document.getElementById('wood').textContent = Math.floor(resources.wood);
+        document.getElementById('stone').textContent = Math.floor(resources.stone);
+        document.getElementById('iron').textContent = Math.floor(resources.iron);
+        document.getElementById('dynamite').textContent = Math.floor(resources.dynamite);
+        document.getElementById('gold').textContent = Math.floor(resources.gold);
+        document.getElementById('pickaxe').textContent = Math.floor(resources.pickaxe);
+        document.getElementById('axe').textContent = Math.floor(resources.axe);
+        document.getElementById('upgraded_dynamite').textContent = Math.floor(resources.upgraded_dynamite);
+    }
+
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    showMenu();
+    console.log('🔰 York загружен!');
+    console.log('📖 Доступные команды:');
+    console.log('  /house upgrade — улучшить дом');
+    console.log('  /house chest — открыть сундук');
+    console.log('  /house add [ник] — добавить игрока в дом');
+    console.log('  /house remove [ник] — удалить игрока из дома');
+    console.log('  /house list — список членов дома');
 </script>
 </body>
 </html>
