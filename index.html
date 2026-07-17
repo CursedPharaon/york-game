@@ -157,6 +157,9 @@
             <button onclick="closeModal('craftModal')">Закрыть</button>
         </div>
     </div>
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
 
     <div id="houseModal" class="modal hidden">
         <div class="modal-inner">
