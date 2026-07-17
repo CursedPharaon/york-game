@@ -45,9 +45,17 @@
         .hidden { display: none; }
         .info { font-size: 12px; color: #888; padding: 4px 0; }
         .loading { color: #aaa; text-align: center; padding: 20px; }
-        .server-list { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; }
-        .server-item { padding: 8px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; }
+        .server-list { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+        .server-item { padding: 8px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+        .server-item button { background: #4a7a4a; border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+        .server-item .del-btn { background: #6a2a2a; }
         .back-btn { background: #2a2a2a; border: none; color: #aaa; padding: 8px 16px; border-radius: 20px; margin-bottom: 10px; cursor: pointer; }
+        .add-server { display: flex; gap: 6px; margin: 10px 0; }
+        .add-server input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
+        .add-server button { background: #4a6a8a; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .server-item .status { font-size: 12px; color: #888; }
+        .server-item .online { color: #4a4; }
+        .server-item .offline { color: #a44; }
     </style>
 </head>
 <body>
@@ -71,12 +79,22 @@
         </div>
     </div>
 
-    <!-- МУЛЬТИПЛЕЕР (ЛОГИН) -->
+    <!-- МУЛЬТИПЛЕЕР -->
     <div id="multiplayerScreen" class="hidden">
         <div class="menu-box" style="padding:15px;">
             <button class="back-btn" onclick="showMenu()">← Назад</button>
             <h3>🌐 Мультиплеер</h3>
+            
+            <!-- Список серверов -->
             <div id="serverList" class="server-list"></div>
+            
+            <!-- Добавление сервера по ссылке -->
+            <div class="add-server">
+                <input id="serverUrlInput" placeholder="Ссылка на сервер (например, https://york-server.onrender.com)">
+                <button onclick="addServer()">➕ Добавить</button>
+            </div>
+            
+            <!-- Логин -->
             <div id="loginBox">
                 <input id="loginUser" placeholder="Никнейм">
                 <input id="loginPass" type="password" placeholder="Пароль">
@@ -124,51 +142,192 @@
 
 <script>
     // ========== НАСТРОЙКИ ==========
-    const API_URL = 'https://york-server.onrender.com';
-    const SERVER_ID = 1;
     const SIZE = 150;
+    const SERVER_ID = 1;
 
     let currentUser = null;
     let currentMode = null; // 'single' или 'multi'
     let currentWorld = null;
+    let currentServerUrl = null;
     let resources = { wood: 0, stone: 0, iron: 0, dynamite: 0, gold: 0 };
     let worldData = {};
     let selectedCell = null;
     let boomMode = false;
+    let eventSource = null;
 
-    // === НАВИГАЦИЯ ===
-    function showMenu() {
-        hideAll();
-        document.getElementById('menuScreen').classList.remove('hidden');
+    // ========== УПРАВЛЕНИЕ СЕРВЕРАМИ ==========
+    function getServers() {
+        return JSON.parse(localStorage.getItem('york_servers') || '[]');
     }
 
-    function showSingleplayer() {
-        hideAll();
-        document.getElementById('singleplayerScreen').classList.remove('hidden');
-        loadSingleplayerList();
+    function saveServers(servers) {
+        localStorage.setItem('york_servers', JSON.stringify(servers));
     }
 
-    function showMultiplayer() {
-        hideAll();
-        document.getElementById('multiplayerScreen').classList.remove('hidden');
-        loadServerList();
+    function addServer() {
+        const url = document.getElementById('serverUrlInput').value.trim();
+        if (!url) { alert('Введите ссылку на сервер'); return; }
+        let servers = getServers();
+        if (servers.find(s => s.url === url)) { alert('Сервер уже добавлен'); return; }
+        servers.push({ url, name: url.replace(/^https?:\/\//, '').split('.')[0] });
+        saveServers(servers);
+        document.getElementById('serverUrlInput').value = '';
+        renderServerList();
     }
 
-    function hideAll() {
-        ['menuScreen', 'singleplayerScreen', 'multiplayerScreen', 'gameScreen'].forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
+    function removeServer(url) {
+        let servers = getServers();
+        servers = servers.filter(s => s.url !== url);
+        saveServers(servers);
+        renderServerList();
     }
 
-    // === ОДИНОЧНАЯ ИГРА ===
+    function renderServerList() {
+        const list = document.getElementById('serverList');
+        const servers = getServers();
+        if (servers.length === 0) {
+            list.innerHTML = '<div style="padding:10px;color:#666;">Нет серверов. Добавь по ссылке!</div>';
+            return;
+        }
+        list.innerHTML = servers.map(s => `
+            <div class="server-item">
+                <span>🌐 ${s.name}</span>
+                <div>
+                    <span class="status" id="status_${s.url}">⏳ проверка...</span>
+                    <button onclick="connectToServer('${s.url}')">Подключиться</button>
+                    <button class="del-btn" onclick="removeServer('${s.url}')">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+        // Проверяем каждый сервер
+        servers.forEach(s => checkServerStatus(s.url));
+    }
+
+    async function checkServerStatus(url) {
+        const el = document.getElementById('status_' + url);
+        if (!el) return;
+        try {
+            const resp = await fetch(url + '/get_servers');
+            if (resp.ok) {
+                el.textContent = '✅ онлайн';
+                el.className = 'status online';
+            } else {
+                el.textContent = '❌ офлайн';
+                el.className = 'status offline';
+            }
+        } catch (e) {
+            el.textContent = '❌ офлайн';
+            el.className = 'status offline';
+        }
+    }
+
+    // ========== ПОДКЛЮЧЕНИЕ К СЕРВЕРУ ==========
+    function connectToServer(url) {
+        currentServerUrl = url;
+        document.getElementById('loginBox').classList.remove('hidden');
+        // Загружаем сохранённые логин/пароль
+        const saved = JSON.parse(localStorage.getItem('york_credentials_' + url) || '{}');
+        document.getElementById('loginUser').value = saved.username || '';
+        document.getElementById('loginPass').value = saved.password || '';
+        document.getElementById('loginError').textContent = '';
+        alert('Подключено к ' + url + '. Введи логин и пароль.');
+    }
+
+    // ========== ЛОГИН ==========
+    async function login() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        if (!username || !password) { showError('Заполните все поля'); return; }
+        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
+        
+        // Сохраняем логин/пароль для этого сервера
+        localStorage.setItem('york_credentials_' + currentServerUrl, JSON.stringify({ username, password }));
+        
+        const result = await apiCall('/login', 'POST', { username, password });
+        if (result.success) {
+            currentUser = username;
+            currentMode = 'multi';
+            currentWorld = 'York Wibe';
+            const resData = await apiCall('/get_resources', 'POST', { username });
+            resources = { wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, dynamite: resData.dynamite || 0, gold: resData.gold || 0 };
+            const world = await apiCall('/get_world', 'POST', { server_id: SERVER_ID });
+            worldData = world;
+            enterGame('Мультиплеер: ' + currentWorld);
+            startChatStream();
+        } else {
+            showError(result.error || 'Ошибка входа');
+        }
+    }
+
+    async function register() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        if (!username || !password) { showError('Заполните все поля'); return; }
+        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
+        const result = await apiCall('/register', 'POST', { username, password });
+        if (result.success) {
+            showError('✅ Зарегистрирован! Теперь войдите.');
+        } else {
+            showError(result.error || 'Ошибка регистрации');
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('loginError');
+        el.textContent = msg;
+        setTimeout(() => el.textContent = '', 4000);
+    }
+
+    // ========== API ==========
+    async function apiCall(endpoint, method = 'POST', data = null) {
+        if (!currentServerUrl) { return { success: false, error: 'Сервер не выбран' }; }
+        try {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (data) options.body = JSON.stringify(data);
+            const resp = await fetch(currentServerUrl + endpoint, options);
+            return await resp.json();
+        } catch (e) {
+            console.error('API ошибка:', e);
+            return { success: false, error: 'Сервер недоступен' };
+        }
+    }
+
+    // ========== ЧАТ В РЕАЛЬНОМ ВРЕМЕНИ (SSE) ==========
+    function startChatStream() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        if (!currentServerUrl) return;
+        try {
+            eventSource = new EventSource(currentServerUrl + '/stream_chat');
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const box = document.getElementById('chatBox');
+                const div = document.createElement('div');
+                div.innerHTML = `<b>${data.user}</b> ${data.msg} <span style="color:#666;font-size:10px;">${data.time || ''}</span>`;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            };
+            eventSource.onerror = function() {
+                setTimeout(startChatStream, 3000);
+            };
+        } catch (e) {
+            console.error('SSE ошибка:', e);
+        }
+    }
+
+    // ========== ОДИНОЧНАЯ ИГРА ==========
     function loadSingleplayerList() {
         const list = document.getElementById('singleplayerList');
         const worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
         list.innerHTML = worlds.length ? worlds.map(w => `
             <div class="server-item">
                 <span>🌍 ${w}</span>
-                <button onclick="loadSingleplayer('${w}')">Играть</button>
-                <button onclick="deleteSingleplayer('${w}')" style="background:#6a2a2a;border:none;color:#fff;border-radius:4px;">🗑️</button>
+                <div>
+                    <button onclick="loadSingleplayer('${w}')">Играть</button>
+                    <button class="del-btn" onclick="deleteSingleplayer('${w}')">🗑️</button>
+                </div>
             </div>
         `).join('') : '<div style="padding:10px;color:#666;">Нет миров. Создай новый!</div>';
     }
@@ -180,9 +339,8 @@
         if (worlds.includes(name)) { alert('Мир уже существует'); return; }
         worlds.push(name);
         localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
-        // Генерируем мир
         const world = generateWorld(SIZE);
-        localStorage.setItem('york_singleplayer_' + name, JSON.stringify(world));
+        localStorage.setItem('york_singleplayer_' + name, JSON.stringify({ world, resources: { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0 } }));
         document.getElementById('worldName').value = '';
         loadSingleplayerList();
         loadSingleplayer(name);
@@ -200,6 +358,7 @@
     function loadSingleplayer(name) {
         currentMode = 'single';
         currentWorld = name;
+        currentServerUrl = null;
         const data = JSON.parse(localStorage.getItem('york_singleplayer_' + name) || 'null');
         if (data) {
             worldData = data.world;
@@ -219,61 +378,7 @@
         }
     }
 
-    // === МУЛЬТИПЛЕЕР ===
-    async function loadServerList() {
-        try {
-            const resp = await fetch(API_URL + '/get_servers');
-            const servers = await resp.json();
-            const list = document.getElementById('serverList');
-            list.innerHTML = servers.map(s => `
-                <div class="server-item">
-                    <span>🌐 ${s.name} (${s.size}x${s.size}, вайп ${s.wipe_days}д)</span>
-                    <span style="color:#888;">${s.admin}</span>
-                </div>
-            `).join('');
-        } catch (e) {
-            document.getElementById('serverList').innerHTML = '<div style="color:#666;">Сервера недоступны</div>';
-        }
-    }
-
-    async function login() {
-        const username = document.getElementById('loginUser').value.trim();
-        const password = document.getElementById('loginPass').value.trim();
-        if (!username || !password) { showError('Заполните все поля'); return; }
-        const result = await apiCall('/login', 'POST', { username, password });
-        if (result.success) {
-            currentUser = username;
-            currentMode = 'multi';
-            currentWorld = 'York Wibe';
-            const resData = await apiCall('/get_resources', 'POST', { username });
-            resources = { wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, dynamite: resData.dynamite || 0, gold: resData.gold || 0 };
-            const world = await apiCall('/get_world', 'POST', { server_id: SERVER_ID });
-            worldData = world;
-            enterGame('Мультиплеер: ' + currentWorld);
-        } else {
-            showError(result.error || 'Ошибка входа');
-        }
-    }
-
-    async function register() {
-        const username = document.getElementById('loginUser').value.trim();
-        const password = document.getElementById('loginPass').value.trim();
-        if (!username || !password) { showError('Заполните все поля'); return; }
-        const result = await apiCall('/register', 'POST', { username, password });
-        if (result.success) {
-            showError('✅ Зарегистрирован! Теперь войдите.');
-        } else {
-            showError(result.error || 'Ошибка регистрации');
-        }
-    }
-
-    function showError(msg) {
-        const el = document.getElementById('loginError');
-        el.textContent = msg;
-        setTimeout(() => el.textContent = '', 4000);
-    }
-
-    // === ГЕНЕРАЦИЯ МИРА ===
+    // ========== ГЕНЕРАЦИЯ МИРА ==========
     function generateWorld(size) {
         const world = {};
         for (let x = 0; x < size; x++) {
@@ -292,7 +397,33 @@
         return world;
     }
 
-    // === ВХОД В ИГРУ ===
+    // ========== НАВИГАЦИЯ ==========
+    function showMenu() {
+        hideAll();
+        document.getElementById('menuScreen').classList.remove('hidden');
+    }
+
+    function showSingleplayer() {
+        hideAll();
+        document.getElementById('singleplayerScreen').classList.remove('hidden');
+        loadSingleplayerList();
+    }
+
+    function showMultiplayer() {
+        hideAll();
+        document.getElementById('multiplayerScreen').classList.remove('hidden');
+        renderServerList();
+        // Показываем логин
+        document.getElementById('loginBox').classList.remove('hidden');
+    }
+
+    function hideAll() {
+        ['menuScreen', 'singleplayerScreen', 'multiplayerScreen', 'gameScreen'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+    }
+
+    // ========== ВХОД В ИГРУ ==========
     function enterGame(serverName) {
         hideAll();
         document.getElementById('gameScreen').classList.remove('hidden');
@@ -301,20 +432,23 @@
         updateUI();
         renderMap();
         if (currentMode === 'multi') {
-            loadChat();
+            // Чат уже запускается через startChatStream
         }
         setupDrag();
     }
 
     function leaveGame() {
         if (currentMode === 'single') saveSingleplayer();
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
         showMenu();
     }
 
-    // === КАРТА ===
+    // ========== КАРТА ==========
     function renderMap() {
         const map = document.getElementById('map');
-        const wrapper = document.getElementById('mapWrapper');
         const cellSize = 30 * (window._scale || 1);
         map.style.gridTemplateColumns = `repeat(${SIZE}, ${cellSize}px)`;
         map.innerHTML = '';
@@ -348,7 +482,7 @@
         if (boomMode) { boomMode = false; doBoom(x, y); }
     }
 
-    // === ПЕРЕТАСКИВАНИЕ И ЗУМ ===
+    // ========== ПЕРЕТАСКИВАНИЕ И ЗУМ ==========
     let startX, startY, startOffX, startOffY;
 
     function setupDrag() {
@@ -403,7 +537,7 @@
         renderMap();
     }
 
-    // === ДЕЙСТВИЯ ===
+    // ========== ДЕЙСТВИЯ ==========
     async function gather(type) {
         if (!selectedCell) { alert('Сначала выбери клетку'); return; }
         const { x, y } = selectedCell;
@@ -458,17 +592,17 @@
         boomMode = false;
     }
 
-    // === СОХРАНЕНИЕ ===
+    // ========== СОХРАНЕНИЕ ==========
     async function saveAll() {
         if (currentMode === 'single') {
             saveSingleplayer();
-        } else if (currentMode === 'multi') {
+        } else if (currentMode === 'multi' && currentServerUrl) {
             await apiCall('/save_resources', 'POST', { username: currentUser, ...resources });
             await apiCall('/save_world', 'POST', { server_id: SERVER_ID, cells: worldData });
         }
     }
 
-    // === ЧАТ ===
+    // ========== ЧАТ ==========
     async function sendChat() {
         const input = document.getElementById('chatInput');
         const msg = input.value.trim();
@@ -479,27 +613,19 @@
 
     async function sendChatMessage(msg, isSystem = false) {
         if (currentMode === 'single') {
-            // В одиночной игре чат просто показывает сообщения локально
-            const chatBox = document.getElementById('chatBox');
+            const box = document.getElementById('chatBox');
             const div = document.createElement('div');
             div.innerHTML = `<b>${isSystem ? 'Система' : (currentUser || 'Игрок')}</b> ${msg}`;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
             return;
         }
-        await apiCall('/send_chat', 'POST', { username: isSystem ? 'Система' : currentUser, message: msg, server_id: SERVER_ID });
-        loadChat();
+        if (currentServerUrl) {
+            await apiCall('/send_chat', 'POST', { username: isSystem ? 'Система' : currentUser, message: msg, server_id: SERVER_ID });
+        }
     }
 
-    async function loadChat() {
-        if (currentMode === 'single') return;
-        const chat = await apiCall('/get_chat', 'POST', { server_id: SERVER_ID });
-        const box = document.getElementById('chatBox');
-        box.innerHTML = chat.map(c => `<div><b>${c.user}</b> ${c.msg} <span style="color:#666;font-size:10px;">${c.time || ''}</span></div>`).join('');
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // === UI ===
+    // ========== UI ==========
     function updateUI() {
         document.getElementById('wood').textContent = Math.floor(resources.wood);
         document.getElementById('stone').textContent = Math.floor(resources.stone);
@@ -508,20 +634,7 @@
         document.getElementById('gold').textContent = Math.floor(resources.gold);
     }
 
-    // === API ===
-    async function apiCall(endpoint, method = 'POST', data = null) {
-        try {
-            const options = { method, headers: { 'Content-Type': 'application/json' } };
-            if (data) options.body = JSON.stringify(data);
-            const resp = await fetch(API_URL + endpoint, options);
-            return await resp.json();
-        } catch (e) {
-            console.error('API ошибка:', e);
-            return { success: false, error: 'Сервер недоступен' };
-        }
-    }
-
-    // === ИНИЦИАЛИЗАЦИЯ ===
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
     showMenu();
     console.log('🔰 York загружен!');
 </script>
