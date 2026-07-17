@@ -927,5 +927,22 @@
     console.log('  /addadmin Nick 1/2/3');
     console.log('  /removeadmin Nick');
 </script>
+<script>
+    // === ПРИНУДИТЕЛЬНОЕ ЗАКРЫТИЕ ВСЕХ МОДАЛОК ===
+    document.addEventListener('DOMContentLoaded', function() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.classList.add('hidden');
+        });
+    });
+
+    // Переопределяем closeModal на всякий случай
+    window.closeModal = function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+        }
+    };
+</script>
 </body>
 </html>
