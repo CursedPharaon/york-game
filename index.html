@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>York</title>
+    <title>York — Turso</title>
     <style>
         * { box-sizing: border-box; font-family: monospace; user-select: none; }
         body { background: #0d0d0d; color: #eee; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -15,8 +15,6 @@
         .menu-btn:hover { background: #3a3a3a; }
         .menu-btn.primary { background: #4a7a4a; }
         .menu-btn.primary:hover { background: #5a8a5a; }
-        .menu-btn.danger { background: #6a2a2a; }
-        .menu-btn.danger:hover { background: #8a3a3a; }
         .login-box { background: #1a1a1a; padding: 20px; border-radius: 12px; }
         .login-box input { width: 100%; padding: 12px; margin: 6px 0; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
         .login-box button { width: 100%; padding: 12px; background: #4a7a4a; border: none; color: #fff; font-weight: bold; border-radius: 6px; margin-top: 6px; }
@@ -45,14 +43,6 @@
         .chat-input button { padding: 8px 16px; background: #4a6a8a; border: none; color: #fff; border-radius: 6px; }
         .hidden { display: none; }
         .info { font-size: 12px; color: #888; padding: 4px 0; }
-        .server-list { background: #1a1a1a; padding: 10px; border-radius: 8px; margin: 10px 0; max-height: 200px; overflow-y: auto; }
-        .server-item { padding: 8px; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
-        .server-item button { background: #4a7a4a; border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
-        .server-item .del-btn { background: #6a2a2a; }
-        .back-btn { background: #2a2a2a; border: none; color: #aaa; padding: 8px 16px; border-radius: 20px; margin-bottom: 10px; cursor: pointer; }
-        .add-server { display: flex; gap: 6px; margin: 10px 0; }
-        .add-server input { flex: 1; padding: 8px; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; }
-        .add-server button { background: #4a6a8a; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 999; }
         .modal-inner { background: #1a1a1a; padding: 20px; border-radius: 12px; max-width: 350px; width: 100%; max-height: 80vh; overflow-y: auto; }
         .modal-inner h3 { margin-top: 0; }
@@ -61,14 +51,10 @@
         .modal-inner .btn-danger { background: #6a2a2a; }
         .modal-inner .btn-craft { background: #2a4a6a; }
         .craft-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a2a; }
-        .status { font-size: 12px; }
-        .online { color: #4a4; }
-        .offline { color: #a44; }
     </style>
 </head>
 <body>
 <div id="app">
-    <!-- ГЛАВНОЕ МЕНЮ -->
     <div id="menuScreen" class="menu-box">
         <h1>🔰 York</h1>
         <h2>Выбери режим</h2>
@@ -76,27 +62,21 @@
         <button class="menu-btn" onclick="showMultiplayer()">🌐 Мультиплеер</button>
     </div>
 
-    <!-- ОДИНОЧНАЯ ИГРА -->
     <div id="singleplayerScreen" class="hidden">
         <div class="menu-box" style="padding:15px;">
             <button class="back-btn" onclick="showMenu()">← Назад</button>
             <h3>🌍 Одиночный мир</h3>
             <input id="worldName" placeholder="Название мира" style="width:100%;padding:10px;background:#2a2a2a;border:none;color:#fff;border-radius:6px;margin:6px 0;">
             <button class="menu-btn primary" onclick="createSingleplayer()">Создать мир</button>
-            <div id="singleplayerList" class="server-list"></div>
+            <div id="singleplayerList" class="hidden" style="margin-top:10px;"></div>
         </div>
     </div>
 
-    <!-- МУЛЬТИПЛЕЕР -->
     <div id="multiplayerScreen" class="hidden">
         <div class="menu-box" style="padding:15px;">
             <button class="back-btn" onclick="showMenu()">← Назад</button>
             <h3>🌐 Мультиплеер</h3>
-            <div id="serverList" class="server-list"></div>
-            <div class="add-server">
-                <input id="serverUrlInput" placeholder="Ссылка на сервер (например, https://york-server.onrender.com)">
-                <button onclick="addServer()">➕ Добавить</button>
-            </div>
+            <div id="serverList"></div>
             <div id="loginBox">
                 <input id="loginUser" placeholder="Никнейм">
                 <input id="loginPass" type="password" placeholder="Пароль">
@@ -107,7 +87,6 @@
         </div>
     </div>
 
-    <!-- ИГРА -->
     <div id="gameScreen" class="hidden">
         <div class="top-bar">
             <div class="res">
@@ -138,7 +117,6 @@
             <div id="map"></div>
         </div>
         <div class="info" id="selectedInfo">Кликни по клетке</div>
-
         <div class="chat-box" id="chatBox"></div>
         <div class="chat-input">
             <input id="chatInput" placeholder="Чат..." onkeydown="if(event.key==='Enter')sendChat()">
@@ -146,7 +124,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКИ (все скрыты по умолчанию) -->
     <div id="craftModal" class="modal hidden">
         <div class="modal-inner">
             <h3>🔧 Крафт</h3>
@@ -173,207 +150,98 @@
 </div>
 
 <script>
-    // ========== НАСТРОЙКИ ==========
-    const API_URL = 'https://york-server.onrender.com';
+    // ========== ПРЯМОЕ ПОДКЛЮЧЕНИЕ К TURSO ==========
+    const TURSO_URL = "https://york-cursedd.aws-eu-west-1.turso.io/v1/execute";
+    const TURSO_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODQzMTk3MjksImlkIjoiMDE5ZjZmNzgtZGEwMS03ZmMwLThjNzgtOWUwNTIxYzdjMGIyIiwia2lkIjoicWpYbEhLbElGQmJNX29uRDlaWEkyWFVfazVBT3h3X3JIMF9TcUZ6MmU0ZyIsInJpZCI6ImRhMmVhODNiLTM0NTYtNDYwNy1iMmJiLTFmNWY1NWM0MDFhMiJ9.iUoQ29p0S3GtFyFwYhz925NtgbelgmJAdMkFXqC_Yap_r2P7K35YZiTqSQ-iPRW_Tpw5hiU03q7ZbVmqRxxZDg";
 
+    async function tursoQuery(sql, params = []) {
+        try {
+            const resp = await fetch(TURSO_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + TURSO_TOKEN,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sql, args: params })
+            });
+            const data = await resp.json();
+            return data.result || { rows: [] };
+        } catch (e) {
+            console.error('Turso ошибка:', e);
+            return { rows: [] };
+        }
+    }
+
+    // ========== ОСТАЛЬНОЙ КОД ==========
     let currentUser = null;
     let currentMode = null;
     let currentWorld = null;
-    let currentServerUrl = null;
     let resources = { wood: 0, stone: 0, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
     let worldData = {};
     let selectedCell = null;
     let boomMode = false;
-    let eventSource = null;
 
-    // ========== УПРАВЛЕНИЕ СЕРВЕРАМИ ==========
-    function getServers() {
-        return JSON.parse(localStorage.getItem('york_servers') || '[]');
+    function showMenu() {
+        document.getElementById('menuScreen').classList.remove('hidden');
+        document.getElementById('singleplayerScreen').classList.add('hidden');
+        document.getElementById('multiplayerScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
     }
 
-    function saveServers(servers) {
-        localStorage.setItem('york_servers', JSON.stringify(servers));
+    function showSingleplayer() {
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('singleplayerScreen').classList.remove('hidden');
+        document.getElementById('multiplayerScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        loadSingleplayerList();
     }
 
-    function addServer() {
-        const url = document.getElementById('serverUrlInput').value.trim();
-        if (!url) { alert('Введите ссылку на сервер'); return; }
-        let servers = getServers();
-        if (servers.find(s => s.url === url)) { alert('Сервер уже добавлен'); return; }
-        servers.push({ url, name: url.replace(/^https?:\/\//, '').split('.')[0] });
-        saveServers(servers);
-        document.getElementById('serverUrlInput').value = '';
-        renderServerList();
+    function showMultiplayer() {
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('singleplayerScreen').classList.add('hidden');
+        document.getElementById('multiplayerScreen').classList.remove('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        loadServers();
     }
 
-    function removeServer(url) {
-        let servers = getServers();
-        servers = servers.filter(s => s.url !== url);
-        saveServers(servers);
-        renderServerList();
+    function enterGame(name) {
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('singleplayerScreen').classList.add('hidden');
+        document.getElementById('multiplayerScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('playerName').textContent = currentUser || 'Игрок';
+        document.getElementById('serverName').textContent = name;
+        updateUI();
+        renderMap();
     }
 
-    function renderServerList() {
-        const list = document.getElementById('serverList');
-        const servers = getServers();
-        if (servers.length === 0) {
-            list.innerHTML = '<div style="padding:10px;color:#666;">Нет серверов. Добавь по ссылке!</div>';
+    function leaveGame() {
+        showMenu();
+    }
+
+    // ========== ОДИНОЧНАЯ ==========
+    function loadSingleplayerList() {
+        const worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
+        const list = document.getElementById('singleplayerList');
+        if (worlds.length === 0) {
+            list.innerHTML = '<div style="color:#666;padding:10px;">Нет миров</div>';
+            list.classList.remove('hidden');
             return;
         }
-        list.innerHTML = servers.map(s => `
-            <div class="server-item">
-                <span>🌐 ${s.name}</span>
-                <div>
-                    <span class="status" id="status_${s.url}">⏳ проверка...</span>
-                    <button onclick="connectToServer('${s.url}')">Подключиться</button>
-                    <button class="del-btn" onclick="removeServer('${s.url}')">🗑️</button>
-                </div>
+        list.innerHTML = worlds.map(w => `
+            <div class="server-item" style="padding:8px;border-bottom:1px solid #222;display:flex;justify-content:space-between;">
+                <span>🌍 ${w}</span>
+                <button onclick="loadSingleplayer('${w}')" style="background:#4a7a4a;border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;">Играть</button>
             </div>
         `).join('');
-        servers.forEach(s => checkServerStatus(s.url));
-    }
-
-    async function checkServerStatus(url) {
-        const el = document.getElementById('status_' + url);
-        if (!el) return;
-        try {
-            const resp = await fetch(url + '/get_servers');
-            if (resp.ok) {
-                el.textContent = '✅ онлайн';
-                el.className = 'status online';
-            } else {
-                el.textContent = '❌ офлайн';
-                el.className = 'status offline';
-            }
-        } catch (e) {
-            el.textContent = '❌ офлайн';
-            el.className = 'status offline';
-        }
-    }
-
-    function connectToServer(url) {
-        currentServerUrl = url;
-        document.getElementById('loginBox').classList.remove('hidden');
-        const saved = JSON.parse(localStorage.getItem('york_credentials_' + url) || '{}');
-        document.getElementById('loginUser').value = saved.username || '';
-        document.getElementById('loginPass').value = saved.password || '';
-        document.getElementById('loginError').textContent = '';
-    }
-
-    // ========== ЛОГИН ==========
-    async function login() {
-        const username = document.getElementById('loginUser').value.trim();
-        const password = document.getElementById('loginPass').value.trim();
-        if (!username || !password) { showError('Заполните все поля'); return; }
-        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
-        
-        localStorage.setItem('york_credentials_' + currentServerUrl, JSON.stringify({ username, password }));
-        
-        try {
-            const resp = await fetch(currentServerUrl + '/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const result = await resp.json();
-            if (result.success) {
-                currentUser = username;
-                currentMode = 'multi';
-                await loadGame();
-                enterGame('Мультиплеер');
-                startChatStream();
-            } else {
-                showError(result.error || 'Ошибка входа');
-            }
-        } catch (e) {
-            showError('Сервер недоступен');
-        }
-    }
-
-    async function register() {
-        const username = document.getElementById('loginUser').value.trim();
-        const password = document.getElementById('loginPass').value.trim();
-        if (!username || !password) { showError('Заполните все поля'); return; }
-        if (!currentServerUrl) { showError('Сначала выбери сервер'); return; }
-        try {
-            const resp = await fetch(currentServerUrl + '/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const result = await resp.json();
-            if (result.success) {
-                showError('✅ Зарегистрирован! Теперь войдите.');
-            } else {
-                showError(result.error || 'Ошибка регистрации');
-            }
-        } catch (e) {
-            showError('Сервер недоступен');
-        }
-    }
-
-    function showError(msg) {
-        const el = document.getElementById('loginError');
-        el.textContent = msg;
-        setTimeout(() => el.textContent = '', 4000);
-    }
-
-    // ========== API ==========
-    async function apiCall(endpoint, method = 'POST', data = null) {
-        if (!currentServerUrl) { return { success: false, error: 'Сервер не выбран' }; }
-        try {
-            const options = { method, headers: { 'Content-Type': 'application/json' } };
-            if (data) options.body = JSON.stringify(data);
-            const resp = await fetch(currentServerUrl + endpoint, options);
-            return await resp.json();
-        } catch (e) {
-            console.error('API ошибка:', e);
-            return { success: false, error: 'Сервер недоступен' };
-        }
-    }
-
-    // ========== ЧАТ В РЕАЛЬНОМ ВРЕМЕНИ ==========
-    function startChatStream() {
-        if (eventSource) { eventSource.close(); eventSource = null; }
-        if (!currentServerUrl) return;
-        try {
-            eventSource = new EventSource(currentServerUrl + '/stream_chat');
-            eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                const box = document.getElementById('chatBox');
-                const div = document.createElement('div');
-                div.innerHTML = `<b>${data.user}</b> ${data.msg} <span style="color:#666;font-size:10px;">${data.time || ''}</span>`;
-                box.appendChild(div);
-                box.scrollTop = box.scrollHeight;
-            };
-            eventSource.onerror = function() {
-                setTimeout(startChatStream, 3000);
-            };
-        } catch (e) {
-            console.error('SSE ошибка:', e);
-        }
-    }
-
-    // ========== ОДИНОЧНАЯ ИГРА ==========
-    function loadSingleplayerList() {
-        const list = document.getElementById('singleplayerList');
-        const worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
-        list.innerHTML = worlds.length ? worlds.map(w => `
-            <div class="server-item">
-                <span>🌍 ${w}</span>
-                <div>
-                    <button onclick="loadSingleplayer('${w}')">Играть</button>
-                    <button class="del-btn" onclick="deleteSingleplayer('${w}')">🗑️</button>
-                </div>
-            </div>
-        `).join('') : '<div style="padding:10px;color:#666;">Нет миров. Создай новый!</div>';
+        list.classList.remove('hidden');
     }
 
     function createSingleplayer() {
         const name = document.getElementById('worldName').value.trim();
-        if (!name) { alert('Введите название мира'); return; }
+        if (!name) { alert('Введите название'); return; }
         let worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
-        if (worlds.includes(name)) { alert('Мир уже существует'); return; }
+        if (worlds.includes(name)) { alert('Мир уже есть'); return; }
         worlds.push(name);
         localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
         const world = generateWorld(150);
@@ -383,23 +251,13 @@
         loadSingleplayer(name);
     }
 
-    function deleteSingleplayer(name) {
-        if (!confirm(`Удалить мир "${name}"?`)) return;
-        let worlds = JSON.parse(localStorage.getItem('york_singleplayer_worlds') || '[]');
-        worlds = worlds.filter(w => w !== name);
-        localStorage.setItem('york_singleplayer_worlds', JSON.stringify(worlds));
-        localStorage.removeItem('york_singleplayer_' + name);
-        loadSingleplayerList();
-    }
-
     function loadSingleplayer(name) {
         currentMode = 'single';
         currentWorld = name;
-        currentServerUrl = null;
         const data = JSON.parse(localStorage.getItem('york_singleplayer_' + name) || 'null');
         if (data) {
             worldData = data.world;
-            resources = data.resources || { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
+            resources = data.resources;
         } else {
             worldData = generateWorld(150);
             resources = { wood: 20, stone: 10, iron: 0, dynamite: 0, gold: 0, pickaxe: 0, axe: 0, upgraded_dynamite: 0 };
@@ -410,8 +268,125 @@
 
     function saveSingleplayer() {
         if (currentMode === 'single' && currentWorld) {
-            const data = { world: worldData, resources: resources };
-            localStorage.setItem('york_singleplayer_' + currentWorld, JSON.stringify(data));
+            localStorage.setItem('york_singleplayer_' + currentWorld, JSON.stringify({ world: worldData, resources }));
+        }
+    }
+
+    // ========== МУЛЬТИПЛЕЕР (Turso) ==========
+    async function loadServers() {
+        const result = await tursoQuery("SELECT id, name, admin, size, wipe_days FROM servers");
+        const list = document.getElementById('serverList');
+        if (!result.rows || result.rows.length === 0) {
+            list.innerHTML = '<div style="color:#666;padding:10px;">Нет серверов</div>';
+            return;
+        }
+        list.innerHTML = result.rows.map(row => `
+            <div style="padding:8px;border-bottom:1px solid #222;display:flex;justify-content:space-between;">
+                <span>🌐 ${row[1]} (${row[3]}x${row[3]}, вайп ${row[4]}д)</span>
+                <span style="color:#4a4;">✅ онлайн</span>
+            </div>
+        `).join('');
+    }
+
+    async function login() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        if (!username || !password) {
+            document.getElementById('loginError').textContent = 'Заполните все поля';
+            return;
+        }
+        const hashed = await sha256(password);
+        const result = await tursoQuery("SELECT username, password, is_admin FROM players WHERE username=?", [username]);
+        if (!result.rows || result.rows.length === 0 || result.rows[0][1] !== hashed) {
+            document.getElementById('loginError').textContent = 'Неверный логин или пароль';
+            return;
+        }
+        currentUser = username;
+        currentMode = 'multi';
+        await loadResources();
+        await loadWorld();
+        enterGame('Мультиплеер');
+        document.getElementById('loginError').textContent = '';
+    }
+
+    async function register() {
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+        if (!username || !password) {
+            document.getElementById('loginError').textContent = 'Заполните все поля';
+            return;
+        }
+        const check = await tursoQuery("SELECT username FROM players WHERE username=?", [username]);
+        if (check.rows && check.rows.length > 0) {
+            document.getElementById('loginError').textContent = 'Пользователь уже существует';
+            return;
+        }
+        const hashed = await sha256(password);
+        await tursoQuery("INSERT INTO players (username, password) VALUES (?, ?)", [username, hashed]);
+        await tursoQuery("INSERT INTO resources (username, wood, stone) VALUES (?, 20, 10)", [username]);
+        document.getElementById('loginError').textContent = '✅ Зарегистрирован! Теперь войдите.';
+        document.getElementById('loginError').style.color = '#4a4';
+        setTimeout(() => {
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('loginError').style.color = '#c44';
+        }, 3000);
+    }
+
+    async function loadResources() {
+        const result = await tursoQuery("SELECT wood, stone, iron, dynamite, gold, pickaxe, axe, upgraded_dynamite FROM resources WHERE username=?", [currentUser]);
+        if (result.rows && result.rows.length > 0) {
+            const row = result.rows[0];
+            resources = {
+                wood: row[0] || 0,
+                stone: row[1] || 0,
+                iron: row[2] || 0,
+                dynamite: row[3] || 0,
+                gold: row[4] || 0,
+                pickaxe: row[5] || 0,
+                axe: row[6] || 0,
+                upgraded_dynamite: row[7] || 0
+            };
+        }
+    }
+
+    async function saveResources() {
+        if (currentMode !== 'multi' || !currentUser) return;
+        await tursoQuery(`UPDATE resources SET wood=?, stone=?, iron=?, dynamite=?, gold=?, pickaxe=?, axe=?, upgraded_dynamite=? WHERE username=?`, [
+            resources.wood, resources.stone, resources.iron, resources.dynamite,
+            resources.gold, resources.pickaxe, resources.axe, resources.upgraded_dynamite,
+            currentUser
+        ]);
+    }
+
+    async function loadWorld() {
+        const result = await tursoQuery("SELECT x, y, block_type, owner, house_level FROM world WHERE server_id=1");
+        worldData = {};
+        if (result.rows) {
+            for (const row of result.rows) {
+                worldData[row[0] + ',' + row[1]] = {
+                    type: row[2],
+                    owner: row[3],
+                    house_level: row[4] || 1
+                };
+            }
+        }
+        // Если мир пуст — генерируем
+        if (Object.keys(worldData).length === 0) {
+            worldData = generateWorld(150);
+            await saveWorld();
+        }
+    }
+
+    async function saveWorld() {
+        if (currentMode !== 'multi' || !currentUser) return;
+        await tursoQuery("DELETE FROM world WHERE server_id=1");
+        const entries = Object.entries(worldData);
+        for (const [key, val] of entries) {
+            const [x, y] = key.split(',').map(Number);
+            await tursoQuery(
+                "INSERT INTO world (x, y, block_type, owner, house_level, server_id) VALUES (?, ?, ?, ?, ?, 1)",
+                [x, y, val.type, val.owner || null, val.house_level || 1]
+            );
         }
     }
 
@@ -428,136 +403,42 @@
                 else if (r < 0.55) type = 'iron';
                 else if (r < 0.58) type = 'gold';
                 else type = 'grass';
-                world[x+','+y] = { type, owner: null, house_level: 0 };
+                world[x + ',' + y] = { type, owner: null, house_level: 0 };
             }
         }
         return world;
     }
 
-    // ========== НАВИГАЦИЯ ==========
-    function showMenu() { hideAll(); document.getElementById('menuScreen').classList.remove('hidden'); }
-    function showSingleplayer() { hideAll(); document.getElementById('singleplayerScreen').classList.remove('hidden'); loadSingleplayerList(); }
-    function showMultiplayer() { hideAll(); document.getElementById('multiplayerScreen').classList.remove('hidden'); renderServerList(); document.getElementById('loginBox').classList.remove('hidden'); }
-    function hideAll() {
-        ['menuScreen', 'singleplayerScreen', 'multiplayerScreen', 'gameScreen'].forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
-    }
-
-    // ========== ВХОД В ИГРУ ==========
-    function enterGame(serverName) {
-        hideAll();
-        document.getElementById('gameScreen').classList.remove('hidden');
-        document.getElementById('playerName').textContent = currentUser || 'Игрок';
-        document.getElementById('serverName').textContent = serverName;
-        updateUI();
-        renderMap();
-        if (currentMode === 'multi') { startChatStream(); }
-        setupDrag();
-    }
-
-    function leaveGame() {
-        if (currentMode === 'single') saveSingleplayer();
-        if (eventSource) { eventSource.close(); eventSource = null; }
-        showMenu();
-    }
-
     // ========== КАРТА ==========
     function renderMap() {
         const map = document.getElementById('map');
-        const cellSize = 30 * (window._scale || 1);
-        map.style.gridTemplateColumns = `repeat(${150}, ${cellSize}px)`;
+        map.style.gridTemplateColumns = 'repeat(30, 1fr)';
         map.innerHTML = '';
         for (let y = 0; y < 30; y++) {
             for (let x = 0; x < 30; x++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 const key = x + ',' + y;
-                const data = worldData[key] || { type: 'grass', owner: null, house_level: 0 };
+                const data = worldData[key] || { type: 'grass', owner: null };
                 cell.dataset.x = x;
                 cell.dataset.y = y;
                 cell.classList.add(data.type);
-                if (data.owner) {
-                    const level = data.house_level || 1;
-                    cell.textContent = '🏠' + level;
-                }
-                cell.style.width = cellSize + 'px';
-                cell.style.height = cellSize + 'px';
-                cell.style.fontSize = (cellSize * 0.5) + 'px';
+                if (data.owner) cell.textContent = '🏠';
                 cell.onclick = () => onCellClick(x, y);
                 map.appendChild(cell);
             }
         }
-        if (window._offsetX === undefined) window._offsetX = 0;
-        if (window._offsetY === undefined) window._offsetY = 0;
-        map.style.transform = `translate(${window._offsetX}px, ${window._offsetY}px)`;
     }
 
     function onCellClick(x, y) {
         const key = x + ',' + y;
-        const data = worldData[key] || { type: 'grass', owner: null, house_level: 0 };
-        document.getElementById('selectedInfo').textContent = `[${x},${y}] ${data.type}${data.owner ? ' 🏠'+data.owner+' (lv'+data.house_level+')' : ''}`;
+        const data = worldData[key] || { type: 'grass', owner: null };
+        document.getElementById('selectedInfo').textContent = `[${x},${y}] ${data.type}${data.owner ? ' 🏠' + data.owner : ''}`;
         selectedCell = { x, y };
-        
         if (boomMode) { boomMode = false; doBoom(x, y); return; }
-        
         if (data.type === 'house' && data.owner === currentUser) {
             openHouseMenu(x, y, data.house_level || 1);
         }
-    }
-
-    // ========== ПЕРЕТАСКИВАНИЕ И ЗУМ ==========
-    let startX, startY, startOffX, startOffY;
-
-    function setupDrag() {
-        const wrapper = document.getElementById('mapWrapper');
-        wrapper.removeEventListener('touchstart', onTouchStart);
-        wrapper.removeEventListener('touchmove', onTouchMove);
-        wrapper.addEventListener('touchstart', onTouchStart);
-        wrapper.addEventListener('touchmove', onTouchMove);
-        wrapper.addEventListener('wheel', onWheel);
-    }
-
-    function onTouchStart(e) {
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        startOffX = window._offsetX || 0;
-        startOffY = window._offsetY || 0;
-        if (e.touches.length === 2) {
-            const t1 = e.touches[0], t2 = e.touches[1];
-            window._dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-            window._scale = window._scale || 1;
-        }
-    }
-
-    function onTouchMove(e) {
-        e.preventDefault();
-        if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            const dx = touch.clientX - startX;
-            const dy = touch.clientY - startY;
-            window._offsetX = startOffX + dx;
-            window._offsetY = startOffY + dy;
-            document.getElementById('map').style.transform = `translate(${window._offsetX}px, ${window._offsetY}px)`;
-        } else if (e.touches.length === 2) {
-            const t1 = e.touches[0], t2 = e.touches[1];
-            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-            const oldDist = window._dist || dist;
-            const oldScale = window._scale || 1;
-            let newScale = oldScale * (dist / oldDist);
-            newScale = Math.min(2, Math.max(0.5, newScale));
-            window._scale = newScale;
-            window._dist = dist;
-            renderMap();
-        }
-    }
-
-    function onWheel(e) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        window._scale = Math.min(2, Math.max(0.5, (window._scale || 1) + delta));
-        renderMap();
     }
 
     // ========== ДЕЙСТВИЯ ==========
@@ -566,24 +447,16 @@
         const { x, y } = selectedCell;
         const key = x + ',' + y;
         const data = worldData[key];
-        if (!data || data.type !== type) { 
-            alert('Здесь нет ' + (type === 'tree' ? 'дерева' : type === 'stone' ? 'камня' : type === 'iron' ? 'руды' : 'золота')); 
-            return; 
+        if (!data || data.type !== type) {
+            alert('Здесь нет ' + type);
+            return;
         }
-        if (data.owner) { alert('Это занято'); return; }
-        
-        let amount = 1;
-        if (type === 'tree' && resources.axe > 0) amount = 1 + resources.axe * 0.5;
-        else if ((type === 'stone' || type === 'iron') && resources.pickaxe > 0) amount = 1 + resources.pickaxe * 0.5;
-        else if (type === 'tree') amount = 2;
-        else if (type === 'stone') amount = 2;
-        else if (type === 'iron') amount = 1;
-        else if (type === 'gold') amount = 0.5;
-        
+        if (data.owner) { alert('Занято'); return; }
+        const amounts = { tree: 2, stone: 2, iron: 1, gold: 0.5 };
+        const add = amounts[type] || 1;
         const resKey = type === 'tree' ? 'wood' : type === 'stone' ? 'stone' : type === 'iron' ? 'iron' : 'gold';
-        resources[resKey] += amount;
+        resources[resKey] += add;
         data.type = 'grass';
-        data.owner = null;
         await saveAll();
         updateUI();
         renderMap();
@@ -597,8 +470,11 @@
         if (!data || data.type !== 'grass') { alert('Только на траве'); return; }
         if (data.owner) { alert('Уже занято'); return; }
         if (resources.wood < 5 || resources.stone < 3) { alert('Нужно 5 дерева и 3 камня'); return; }
-        resources.wood -= 5; resources.stone -= 3;
-        data.type = 'house'; data.owner = currentUser; data.house_level = 1;
+        resources.wood -= 5;
+        resources.stone -= 3;
+        data.type = 'house';
+        data.owner = currentUser;
+        data.house_level = 1;
         await saveAll();
         updateUI();
         renderMap();
@@ -610,14 +486,14 @@
             if (confirm('Использовать улучшенный динамит (взрыв 5x5)?')) {
                 boomMode = true;
                 boomType = 'upgraded';
-                alert('💣 Выбери клетку для мощного взрыва');
+                alert('Выбери клетку');
                 return;
             }
         }
-        if (resources.dynamite < 1) { alert('Нет динамита! Скрафти его.'); return; }
+        if (resources.dynamite < 1) { alert('Нет динамита!'); return; }
         boomMode = true;
         boomType = 'normal';
-        alert('💣 Выбери клетку для взрыва');
+        alert('Выбери клетку');
     }
 
     let boomType = 'normal';
@@ -632,16 +508,14 @@
             if (resources.dynamite < 1) return;
             resources.dynamite -= 1;
         }
-        
         for (let dx = -radius; dx <= radius; dx++) {
             for (let dy = -radius; dy <= radius; dy++) {
-                const k = (x+dx) + ',' + (y+dy);
+                const k = (x + dx) + ',' + (y + dy);
                 if (worldData[k]) {
                     worldData[k] = { type: 'grass', owner: null, house_level: 0 };
                 }
             }
         }
-        
         await saveAll();
         updateUI();
         renderMap();
@@ -677,21 +551,18 @@
         };
         const craft = crafts[name];
         if (!craft) return;
-        
         for (const [res, amount] of Object.entries(craft.res)) {
             if (resources[res] < amount) {
                 alert(`Не хватает ${res}! Нужно ${amount}`);
                 return;
             }
         }
-        
         for (const [res, amount] of Object.entries(craft.res)) {
             resources[res] -= amount;
         }
         for (const [res, amount] of Object.entries(craft.result)) {
             resources[res] += amount;
         }
-        
         await saveAll();
         updateUI();
         sendChatMessage('🔧 ' + currentUser + ' скрафтил ' + name + '!', true);
@@ -699,7 +570,7 @@
     }
 
     // ========== ДОМА ==========
-    async function openHouseMenu(x, y, level) {
+    function openHouseMenu(x, y, level) {
         const modal = document.getElementById('houseModal');
         modal.classList.remove('hidden');
         const menu = document.getElementById('houseMenu');
@@ -711,9 +582,8 @@
             4: { wood: 80, stone: 40, iron: 20 }
         };
         const cost = upgradeCosts[level];
-        const canUpgrade = level < maxLevel && cost && 
+        const canUpgrade = level < maxLevel && cost &&
             resources.wood >= cost.wood && resources.stone >= cost.stone && resources.iron >= cost.iron;
-        
         menu.innerHTML = `
             <p>Уровень дома: ${level} / ${maxLevel}</p>
             <p>Слотов в сундуке: ${level * 5}</p>
@@ -728,90 +598,120 @@
     }
 
     async function upgradeHouse(x, y, currentLevel) {
-        if (currentMode === 'single') {
-            const key = x + ',' + y;
-            if (worldData[key]) {
-                worldData[key].house_level = (worldData[key].house_level || 1) + 1;
-                await saveAll();
-                renderMap();
-                sendChatMessage('🏠 ' + currentUser + ' улучшил дом до уровня ' + worldData[key].house_level + '!', true);
-                closeModal('houseModal');
-                updateUI();
-            }
-            return;
+        const key = x + ',' + y;
+        if (worldData[key]) {
+            worldData[key].house_level = (worldData[key].house_level || 1) + 1;
+            await saveAll();
+            renderMap();
+            sendChatMessage('🏠 ' + currentUser + ' улучшил дом до уровня ' + worldData[key].house_level + '!', true);
+            closeModal('houseModal');
+            updateUI();
         }
-        // Для мультиплеера — здесь будет API, но пока заглушка
-        alert('Улучшение дома в мультиплеере пока в разработке');
     }
 
-    async function openChest(x, y) {
+    function openChest(x, y) {
         const modal = document.getElementById('chestModal');
         modal.classList.remove('hidden');
         const key = x + ',' + y;
         const data = worldData[key];
         if (!data || data.owner !== currentUser) { alert('Это не твой дом!'); return; }
-        
         const level = data.house_level || 1;
         const slots = level * 5;
-        
         const container = document.getElementById('chestInventory');
         container.innerHTML = `
             <p>📦 Сундук (${slots} слотов)</p>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;">
-                ${Array.from({length: slots}, (_, i) => `
+                ${Array.from({ length: slots }, (_, i) => `
                     <div style="background:#2a2a2a;padding:8px;border-radius:4px;min-width:30px;text-align:center;color:#666;">пусто</div>
                 `).join('')}
             </div>
-            <p style="font-size:12px;color:#888;">🔧 Команды для сундука в разработке...</p>
+            <p style="font-size:12px;color:#888;">Команды: /chest put [предмет] [кол-во], /chest take [предмет] [кол-во]</p>
         `;
     }
 
-    // ========== КОМАНДЫ ЧЕРЕЗ ЧАТ ==========
+    // ========== ЧАТ ==========
     async function sendChat() {
         const input = document.getElementById('chatInput');
         const msg = input.value.trim();
         if (!msg) return;
         input.value = '';
-        
         if (msg.startsWith('/')) {
             await handleCommand(msg);
             return;
         }
-        
-        if (currentMode === 'single') {
+        if (currentMode === 'multi' && currentUser) {
+            await tursoQuery("INSERT INTO chat (username, message, server_id) VALUES (?, ?, 1)", [currentUser, msg]);
+            await loadChat();
+        } else {
             const box = document.getElementById('chatBox');
             const div = document.createElement('div');
             div.innerHTML = `<b>${currentUser || 'Игрок'}</b> ${msg}`;
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
-            return;
         }
-        await apiCall('/send_chat', 'POST', { username: currentUser, message: msg });
     }
 
     async function sendChatMessage(msg, isSystem = false) {
-        if (currentMode === 'single') {
+        if (currentMode === 'multi' && currentUser) {
+            const user = isSystem ? 'Система' : currentUser;
+            await tursoQuery("INSERT INTO chat (username, message, server_id) VALUES (?, ?, 1)", [user, msg]);
+            await loadChat();
+        } else {
             const box = document.getElementById('chatBox');
             const div = document.createElement('div');
             div.innerHTML = `<b>${isSystem ? 'Система' : (currentUser || 'Игрок')}</b> ${msg}`;
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
-            return;
         }
-        await apiCall('/send_chat', 'POST', { 
-            username: isSystem ? 'Система' : currentUser, 
-            message: msg
-        });
     }
 
+    async function loadChat() {
+        const result = await tursoQuery("SELECT username, message, timestamp FROM chat WHERE server_id=1 ORDER BY id DESC LIMIT 50");
+        const box = document.getElementById('chatBox');
+        if (!result.rows || result.rows.length === 0) {
+            box.innerHTML = '<div style="color:#666;">Чат пуст</div>';
+            return;
+        }
+        box.innerHTML = result.rows.reverse().map(row => `
+            <div><b>${row[0]}</b> ${row[1]} <span style="color:#666;font-size:10px;">${row[2] || ''}</span></div>
+        `).join('');
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // ========== КОМАНДЫ ==========
     async function handleCommand(cmd) {
         const parts = cmd.split(' ');
         const command = parts[0].toLowerCase();
-        
+        if (command === '/chest' && parts.length >= 3) {
+            const action = parts[1];
+            const item = parts[2];
+            const amount = parseInt(parts[3]) || 1;
+            if (action === 'put') {
+                if (resources[item] === undefined) {
+                    sendChatMessage('❌ Нет такого предмета', true);
+                    return;
+                }
+                if (resources[item] < amount) {
+                    sendChatMessage(`❌ У тебя только ${resources[item]} ${item}`, true);
+                    return;
+                }
+                resources[item] -= amount;
+                await saveAll();
+                updateUI();
+                sendChatMessage(`✅ Положил ${amount} ${item} в сундук`, true);
+                return;
+            }
+            if (action === 'take') {
+                resources[item] = (resources[item] || 0) + amount;
+                await saveAll();
+                updateUI();
+                sendChatMessage(`✅ Забрал ${amount} ${item} из сундука`, true);
+                return;
+            }
+        }
         if (command === '/house' && parts.length >= 2) {
             const action = parts[1];
-            if (action === 'upgrade') {
-                if (!selectedCell) { sendChatMessage('❌ Сначала выбери дом', true); return; }
+            if (action === 'upgrade' && selectedCell) {
                 const { x, y } = selectedCell;
                 const key = x + ',' + y;
                 const data = worldData[key];
@@ -831,7 +731,6 @@
                     4: { wood: 80, stone: 40, iron: 20 }
                 };
                 const cost = costs[level];
-                if (!cost) return;
                 if (resources.wood < cost.wood || resources.stone < cost.stone || resources.iron < cost.iron) {
                     sendChatMessage(`❌ Не хватает! Нужно: ${cost.wood}🪵 ${cost.stone}🪨 ${cost.iron}⛏️`, true);
                     return;
@@ -846,76 +745,22 @@
                 sendChatMessage(`🏠 Дом улучшен до уровня ${data.house_level}!`, true);
                 return;
             }
-            if (action === 'chest') {
-                if (!selectedCell) { sendChatMessage('❌ Сначала выбери дом', true); return; }
+            if (action === 'chest' && selectedCell) {
                 const { x, y } = selectedCell;
-                const key = x + ',' + y;
-                const data = worldData[key];
-                if (!data || data.type !== 'house' || data.owner !== currentUser) {
-                    sendChatMessage('❌ Это не твой дом', true);
-                    return;
-                }
-                await openChest(x, y);
-                return;
-            }
-            if (action === 'add' && parts.length >= 3) {
-                const nick = parts[2];
-                if (currentMode === 'single') {
-                    sendChatMessage(`✅ Игрок ${nick} добавлен в дом (одиночный режим)`, true);
-                    return;
-                }
-                // Для мультиплеера — заглушка
-                sendChatMessage(`✅ Игрок ${nick} добавлен в дом (в разработке)`, true);
-                return;
-            }
-            if (action === 'remove' && parts.length >= 3) {
-                const nick = parts[2];
-                if (currentMode === 'single') {
-                    sendChatMessage(`✅ Игрок ${nick} удалён из дома (одиночный режим)`, true);
-                    return;
-                }
-                sendChatMessage(`✅ Игрок ${nick} удалён из дома (в разработке)`, true);
-                return;
-            }
-            if (action === 'list') {
-                if (currentMode === 'single') {
-                    sendChatMessage('🏠 Владелец: ' + currentUser, true);
-                    return;
-                }
-                sendChatMessage('🏠 Члены дома: пока никого (в разработке)', true);
+                openChest(x, y);
                 return;
             }
         }
-        
-        sendChatMessage('❌ Неизвестная команда. Доступно: /house upgrade, /house chest, /house add [ник], /house remove [ник], /house list', true);
-    }
-
-    // ========== МОДАЛКИ ==========
-    function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
+        sendChatMessage('❌ Неизвестная команда. /chest put/take, /house upgrade/chest', true);
     }
 
     // ========== СОХРАНЕНИЕ ==========
-    async function loadGame() {
-        if (currentMode === 'multi' && currentServerUrl) {
-            const resData = await apiCall('/get_resources', 'POST', { username: currentUser });
-            resources = { 
-                wood: resData.wood || 0, stone: resData.stone || 0, iron: resData.iron || 0, 
-                dynamite: resData.dynamite || 0, gold: resData.gold || 0,
-                pickaxe: resData.pickaxe || 0, axe: resData.axe || 0,
-                upgraded_dynamite: resData.upgraded_dynamite || 0
-            };
-            const world = await apiCall('/get_world', 'POST', { server_id: 1 });
-            worldData = world;
-        }
-    }
-
     async function saveAll() {
         if (currentMode === 'single') {
             saveSingleplayer();
-        } else if (currentMode === 'multi' && currentServerUrl) {
-            await apiCall('/save_resources', 'POST', { username: currentUser, ...resources });
-            await apiCall('/save_world', 'POST', { server_id: 1, cells: worldData });
+        } else if (currentMode === 'multi') {
+            await saveResources();
+            await saveWorld();
         }
     }
 
@@ -931,15 +776,21 @@
         document.getElementById('upgraded_dynamite').textContent = Math.floor(resources.upgraded_dynamite);
     }
 
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+
+    // ========== SHA-256 ==========
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ========== ЗАПУСК ==========
     showMenu();
-    console.log('🔰 York загружен!');
-    console.log('📖 Доступные команды:');
-    console.log('  /house upgrade — улучшить дом');
-    console.log('  /house chest — открыть сундук');
-    console.log('  /house add [ник] — добавить игрока в дом');
-    console.log('  /house remove [ник] — удалить игрока из дома');
-    console.log('  /house list — список членов дома');
+    console.log('🔰 York (Turso) загружен!');
 </script>
 </body>
 </html>
